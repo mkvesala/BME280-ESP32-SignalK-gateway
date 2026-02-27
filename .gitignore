@@ -1,0 +1,12 @@
+secrets.h
+
+.claude/
+CLAUDE_SESSION_CONTEXT.md
+
+build/
+.pio/
+
+.vscode/
+*.code-workspace
+
+.DS_Store
