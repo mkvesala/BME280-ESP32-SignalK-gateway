@@ -1,51 +1,29 @@
 #include <Arduino.h>
-#include <Wire.h>
-#include <Adafruit_Sensor.h>
-#include <Adafruit_BME280.h>
+#include "BME280Application.h"
 
-// Using Adafruit Unified Sensor 1.1.15
-// Using Adafruit BusIO 1.17.4
-// Using Adafruit BME280 Library 2.3.0
+// === M A I N  P R O G R A M ===
+//
+// - Owns BME280Application instance
+// - Initiates serial
+// - Initiates application, halts if critical failure
+// - Executes app.loop() in the main loop()
 
-static constexpr uint8_t SDA_PIN = 21;
-static constexpr uint8_t SCL_PIN = 22;
-static constexpr uint8_t I2C_ADDR = 0x77;
+BME280Application app;
 
-Adafruit_BME280 bme;
-
+// Setup
 void setup() {
-
   Serial.begin(115200);
-  delay(2000);
-  Serial.println();
-  delay(1000);
+  delay(47);
 
-  Wire.begin(SDA_PIN, SCL_PIN);
-  delay(200);
-  
-  if (!bme.begin(I2C_ADDR)) {
-    Serial.println("BME280 sensor not found!");
-    while (1) delay(2000);
+  app.begin();
+
+  if (!app.sensorOk()) {
+    Serial.println("BME280 INIT FAILED! CHECK WIRING AND I2C ADDRESS.");
+    while (1) delay(1999);
   }
-
-  Serial.println("BME280 sensor connected.");
-
 }
 
+// Main loop
 void loop() {
-
-  Serial.print("TEMP: ");
-  Serial.print(bme.readTemperature());
-  Serial.println(" °C");
-
-  Serial.print("HUMI: ");
-  Serial.print(bme.readHumidity());
-  Serial.println(" %");
-
-  Serial.print("PRES: ");
-  Serial.print(bme.readPressure() / 100.0F);
-  Serial.println(" hPa");
-
-  delay(3000);
-
+  app.loop();
 }

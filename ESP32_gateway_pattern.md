@@ -810,13 +810,18 @@ void SignalKBroker::subscribeToPath() {
 ESPNowBroker vastaa ESP-NOW-protokollan kautta tapahtuvasta tiedonsiirrosta
 muiden ESP32-laitteiden kanssa. Se on itsenaiinen WiFista (toimii myos ilman WiFi-yhteytta).
 
+Kaikki ESP-NOW-paketit kayttavat jaettua `espnow_protocol.h` -headeria, joka maarittelee
+yhteisen pakettiformaatin: 8-tavuinen `ESPNowHeader` + tyypitetty payload `ESPNowPacket<T>` -kaareen sisalla.
+Sama header jaetaan kaikkien ESP32-gateway-projektien kesken.
+
 ### Periaatteet:
 - Ottaa konstruktorissa `&`-viittauksen Processor-luokkaan
 - Kayttaa broadcast-lahetysta (FF:FF:FF:FF:FF:FF) kaikille kuulijoille
 - Staattiset callback-funktiot (ESP-NOW API vaatii C-tyyliset callbackit)
 - Komennon vastaanotto volatile-lipulla + kasittely loop()-kontekstissa
 - Sama deadband-logiikka kuin SignalKBrokerissa
-- Lahettaa binary-structin suoraan (ei JSON:ia)
+- Lahettaa `ESPNowPacket<T>` -rakenteen (header + payload) binaarisena (ei JSON:ia)
+- Vastaanotto validoi `ESPNowHeader`:n magic-numeron, msg_type:n ja payload_len:n ennen kasittelya
 
 ### Header
 
@@ -825,6 +830,7 @@ muiden ESP32-laitteiden kanssa. Se on itsenaiinen WiFista (toimii myos ilman WiF
 #include <Arduino.h>
 #include <esp_now.h>
 #include "XXXProcessor.h"
+#include "espnow_protocol.h"
 
 class ESPNowBroker {
 public:
@@ -857,6 +863,7 @@ private:
 ### Implementation
 
 ```cpp
+#include "espnow_protocol.h"
 #include "ESPNowBroker.h"
 #include <WiFi.h>
 
@@ -884,7 +891,7 @@ bool ESPNowBroker::begin() {
     return true;
 }
 
-// Laheta prosessorin delta broadcast-viestina
+// Laheta prosessorin delta broadcast-viestina ESPNowPacket-kaareen sisalla
 void ESPNowBroker::sendDelta() {
     if (!initialized) return;
 
@@ -899,8 +906,11 @@ void ESPNowBroker::sendDelta() {
     }
     if (!changed) return;
 
-    // Laheta struct suoraan binaarisena
-    esp_now_send(BROADCAST_ADDR, (const uint8_t*)&delta, sizeof(delta));
+    // Kokoa ESPNowPacket: header + payload
+    ESPNow::ESPNowPacket<ESPNow::SensorDelta> pkt;
+    initHeader(pkt.hdr, ESPNow::ESPNowMsgType::SENSOR_DELTA, sizeof(ESPNow::SensorDelta));
+    memcpy(&pkt.payload, &delta, sizeof(ESPNow::SensorDelta));
+    esp_now_send(BROADCAST_ADDR, (const uint8_t*)&pkt, sizeof(pkt));
 }
 
 // Kasittele saapunut komento loop()-kontekstissa (EI callbackin sisalla)
@@ -911,8 +921,11 @@ void ESPNowBroker::processIncomingCommands() {
     // Suorita komento
     // Esim: processor.doSomething();
 
-    // Laheta vastaus komentolahettajalle
-    uint8_t response[8] = { /* protokollan mukainen vastaus */ };
+    // Kokoa vastaus-paketti: header + payload
+    ESPNow::ESPNowPacket<ESPNow::CommandResponse> pkt;
+    initHeader(pkt.hdr, ESPNow::ESPNowMsgType::COMMAND_RESPONSE, sizeof(ESPNow::CommandResponse));
+    pkt.payload.success = 1;
+    // ... tayta payload implementaation mukaan
 
     esp_now_peer_info_t peer = {};
     memcpy(peer.peer_addr, last_sender_mac, 6);
@@ -920,7 +933,7 @@ void ESPNowBroker::processIncomingCommands() {
     peer.encrypt = false;
     if (!esp_now_is_peer_exist(last_sender_mac)) esp_now_add_peer(&peer);
 
-    esp_now_send(last_sender_mac, response, sizeof(response));
+    esp_now_send(last_sender_mac, (const uint8_t*)&pkt, sizeof(pkt));
 }
 
 // STAATTINEN callback - EI saa tehda raskasta tyota
@@ -928,10 +941,21 @@ void ESPNowBroker::onDataSent(const esp_now_send_info_t* info, esp_now_send_stat
     // Tyypillisesti tyhja tai debug-logi
 }
 
-// STAATTINEN callback - aseta vain lippu, kasittely loop():ssa
+// STAATTINEN callback - validoi header, aseta lippu, kasittely loop():ssa
 void ESPNowBroker::onDataRecv(const esp_now_recv_info_t* recv_info, const uint8_t* data, int len) {
-    // Tunnista komento protokollan perusteella
-    if (len == 8 && data[0] == 'C' && data[1] == 'M' && data[2] == 'D') {
+    // 1. Tarkista paketin minimikoko
+    if (len < (int)sizeof(ESPNow::ESPNowHeader)) return;
+
+    // 2. Lue ja validoi header
+    ESPNow::ESPNowHeader hdr;
+    memcpy(&hdr, data, sizeof(ESPNow::ESPNowHeader));
+    if (hdr.magic != ESPNow::ESPNOW_MAGIC) return;
+
+    // 3. Tarkista payload-koko
+    if (len < (int)(sizeof(ESPNow::ESPNowHeader) + hdr.payload_len)) return;
+
+    // 4. Reititys msg_type:n perusteella
+    if (static_cast<ESPNow::ESPNowMsgType>(hdr.msg_type) == ESPNow::ESPNowMsgType::SOME_COMMAND) {
         memcpy(last_sender_mac, recv_info->src_addr, 6);
         command_received = true;
     }
@@ -940,12 +964,15 @@ void ESPNowBroker::onDataRecv(const esp_now_recv_info_t* recv_info, const uint8_
 
 ### ESP-NOW-protokollan suunnitteluohjeet:
 
-1. **Lahetys**: Broadcast kaikille (`FF:FF:FF:FF:FF:FF`)
-2. **Vastaanotto**: Staattiset callbackit asettavat vain `volatile bool` -lipun
-3. **Kasittely**: Lippu tarkistetaan ja kasitellaan `loop()`-kontekstissa (`processIncomingCommands`)
-4. **Vastaus**: Unicast-vastaus lahettajan MAC-osoitteeseen
-5. **Data**: Binary struct suoraan, ei JSON:ia (tehokkuus ja nopeus)
-6. **WiFi-tila**: `WIFI_AP_STA` tarvitaan jotta WiFi ja ESP-NOW toimivat rinnakkain
+1. **Pakettiformaatti**: Kaikki paketit kayttavat `ESPNowPacket<T>` (header + payload), maaritelty `espnow_protocol.h`:ssa
+2. **Header-validointi**: Vastaanottaja tarkistaa aina: magic, msg_type, payload_len ennen kasittelya
+3. **Lahetys**: Broadcast kaikille (`FF:FF:FF:FF:FF:FF`)
+4. **Vastaanotto**: Staattiset callbackit validoivat headerin ja asettavat `volatile bool` -lipun
+5. **Kasittely**: Lippu tarkistetaan ja kasitellaan `loop()`-kontekstissa (`processIncomingCommands`)
+6. **Vastaus**: Unicast-vastaus lahettajan MAC-osoitteeseen, myos `ESPNowPacket`-kaareen sisalla
+7. **Data**: Binary struct `ESPNowPacket<T>`, ei JSON:ia (tehokkuus ja nopeus)
+8. **WiFi-tila**: `WIFI_AP_STA` tarvitaan jotta WiFi ja ESP-NOW toimivat rinnakkain
+9. **Jaettu header**: `espnow_protocol.h` kopioidaan kaikkiin ESP32-gateway-projekteihin — kaikki laitteet kayttavat samaa pakettiformaattia
 
 ---
 
@@ -1345,6 +1372,67 @@ inline constexpr const char* DEFAULT_WEB_PASSWORD = "your_default_web_password_h
 inline constexpr const char* SW_VERSION = "v1.0.0";
 ```
 
+### espnow_protocol.h - Jaettu ESP-NOW-protokollamaarittely
+
+Tama tiedosto kopioidaan kaikkiin ESP32-gateway-projekteihin. Se maarittelee yhteisen
+pakettiformaatin jolla kaikki verkon ESP32-laitteet kommunikoivat.
+
+```cpp
+#pragma once
+#include <Arduino.h>
+#include <cmath>
+#include <cstring>
+
+namespace ESPNow {
+
+    // Magic-numero tunnistaa omat paketit muiden ESP-NOW-laitteiden joukosta
+    static constexpr uint32_t ESPNOW_MAGIC = 0x45534E57; // 'E''S''N''W'
+
+    // Viestityypit (laajenna kun uusia sensoreita lisataan)
+    enum class ESPNowMsgType : uint8_t {
+        HEADING_DELTA   = 1,
+        BATTERY_DELTA   = 2,
+        WEATHER_DELTA   = 3,
+        LEVEL_COMMAND   = 10,
+        LEVEL_RESPONSE  = 11,
+    };
+
+    // 8-tavuinen header kaikille viesteille
+    struct ESPNowHeader {
+        uint32_t magic;           // ESPNOW_MAGIC
+        uint8_t  msg_type;        // ESPNowMsgType
+        uint8_t  payload_len;     // payloadin koko tavuina (max 250)
+        uint8_t  reserved[2];     // padding, nollataan
+    } __attribute__((packed));
+
+    // Payload-structit - maarittele sensorin mukaan
+    struct HeadingDelta { /* ... */ };
+    struct BatteryDelta { /* ... */ };
+    struct WeatherDelta { /* ... */ };
+    struct LevelCommand { /* ... */ };
+    struct LevelResponse { /* ... */ };
+
+    // Paketti-wrapper: header + payload
+    template <typename TPayload>
+    struct ESPNowPacket {
+        ESPNowHeader hdr;
+        TPayload payload;
+    } __attribute__((packed));
+
+    // Alustusfunktio headerille
+    inline void initHeader(ESPNowHeader& h, ESPNowMsgType type, uint8_t payload_len) {
+        h.magic       = ESPNOW_MAGIC;
+        h.msg_type    = static_cast<uint8_t>(type);
+        h.payload_len = payload_len;
+        h.reserved[0] = 0;
+        h.reserved[1] = 0;
+    }
+
+} // namespace ESPNow
+```
+
+Taydelliset payload-structit loytyyvat referenssiprojektista: `CMPS14-ESP32-SignalK-gateway/espnow_protocol.h`.
+
 ### Globaalit apufunktiot (harmonic.h / muu vastaava)
 
 ```cpp
@@ -1444,18 +1532,19 @@ Seuraavat kirjastot tarvitaan (asennetaan Arduino Library Managerista tai Platfo
 Kun luodaan uusi XXX-ESP32-SignalK-gateway:
 
 1. [ ] Kopioi tiedostorakenne ja nimeaa uudelleen XXX-prefiksilla
-2. [ ] Toteuta `XXXSensor` - sensorin raakadatan lukeminen
-3. [ ] Toteuta `XXXProcessor` - datan prosessointi ja delta-structit
-4. [ ] Toteuta `XXXPreferences` - NVS-avaimet ja load/save
-5. [ ] Muokkaa `SignalKBroker` - oikeat SignalK-polut ja delta-metodit
-6. [ ] Muokkaa `ESPNowBroker` - oikea lahetysdata ja komentoprotokolla
-7. [ ] Toteuta `WebUIManager` - HTML/JS kayttoliittyma (autentikointi kopioidaan)
-8. [ ] Toteuta `DisplayManager` - naytto ja LEDit (tai poista jos ei nayttoa)
-9. [ ] Tayta `secrets.example.h` oikeilla vakioilla
-10. [ ] Maarittele `version.h`
-11. [ ] Maarittele Application-luokan ajastusvakiot
-12. [ ] Johdota riippuvuudet Application-konstruktorissa
-13. [ ] Toteuta main .ino
+2. [ ] Kopioi `espnow_protocol.h` referenssiprojektista — lisaa tarvittavat payload-structit ja msg_type-arvot
+3. [ ] Toteuta `XXXSensor` - sensorin raakadatan lukeminen
+4. [ ] Toteuta `XXXProcessor` - datan prosessointi ja delta-structit
+5. [ ] Toteuta `XXXPreferences` - NVS-avaimet ja load/save
+6. [ ] Muokkaa `SignalKBroker` - oikeat SignalK-polut ja delta-metodit
+7. [ ] Muokkaa `ESPNowBroker` - oikea `ESPNowPacket<T>` lahetysdata, msg_type ja komentoprotokolla
+8. [ ] Toteuta `WebUIManager` - HTML/JS kayttoliittyma (autentikointi kopioidaan)
+9. [ ] Toteuta `DisplayManager` - naytto ja LEDit (tai poista jos ei nayttoa)
+10. [ ] Tayta `secrets.example.h` oikeilla vakioilla
+11. [ ] Maarittele `version.h`
+12. [ ] Maarittele Application-luokan ajastusvakiot
+13. [ ] Johdota riippuvuudet Application-konstruktorissa
+14. [ ] Toteuta main .ino
 
 ---
 
