@@ -13,6 +13,14 @@
 #include "DisplayManager.h"
 #include "WebUIManager.h"
 
+// === C L A S S  B M E 2 8 0 A P P L I C A T I O N ===
+//
+// - Class BME280Application - responsible for orchestrating everything
+// - Init: app.begin();
+// - Loop: app.loop();
+// - Critical guard: app.sensorOk();
+// - Owns: Adafruit_BME280, BME280Processor, BME280Preferences, SignalKBroker, ESPNowBroker, DisplayManager, WebUIManager
+
 class BME280Application {
 
 public:
@@ -21,7 +29,7 @@ public:
 
     void begin();
     void loop();
-    bool sensorOk() const { return sensor_ok; }
+    bool sensorOk() const { return _sensor_ok; }
 
 private:
 
@@ -31,34 +39,34 @@ private:
     static constexpr uint8_t BME280_ADDR = 0x77;
 
     // Timer constants
-    static constexpr unsigned long READ_MS              = 2003;
+    static constexpr unsigned long READ_MS              = 997;
     static constexpr unsigned long SIGNALK_TX_MS        = 1999;
-    static constexpr unsigned long ESPNOW_TX_MS         = 997;
+    static constexpr unsigned long ESPNOW_TX_MS         = 2003;
     static constexpr unsigned long WIFI_STATUS_CHECK_MS = 503;
     static constexpr unsigned long WIFI_TIMEOUT_MS      = 90001;
     static constexpr unsigned long WS_RETRY_MS          = 1999;
     static constexpr unsigned long WS_RETRY_MAX_MS      = 119993;
 
     // Timers
-    unsigned long expn_retry_ms      = WS_RETRY_MS;
-    unsigned long next_ws_try_ms     = 0;
-    unsigned long last_read_ms       = 0;
-    unsigned long last_signalk_tx_ms = 0;
-    unsigned long last_espnow_tx_ms  = 0;
-    unsigned long wifi_conn_start_ms = 0;
-    unsigned long wifi_last_check_ms = 0;
+    unsigned long _expn_retry_ms      = WS_RETRY_MS;
+    unsigned long _next_ws_try_ms     = 0;
+    unsigned long _last_read_ms       = 0;
+    unsigned long _last_signalk_tx_ms = 0;
+    unsigned long _last_espnow_tx_ms  = 0;
+    unsigned long _wifi_conn_start_ms = 0;
+    unsigned long _wifi_last_check_ms = 0;
 
-    bool sensor_ok = false;
-    WifiState wifi_state = WifiState::INIT;
+    bool _sensor_ok = false;
+    WifiState _wifi_state = WifiState::INIT;
 
     // Stack allocated instances owned by the app
-    Adafruit_BME280   bme;
-    BME280Processor   processor;
-    BME280Preferences prefs;
-    SignalKBroker     signalk;
-    ESPNowBroker      espnow;
-    DisplayManager    display;
-    WebUIManager      webui;
+    Adafruit_BME280   _bme;
+    BME280Processor   _processor;
+    BME280Preferences _prefs;
+    SignalKBroker     _signalk;
+    ESPNowBroker      _espnow;
+    DisplayManager    _display;
+    WebUIManager      _webui;
 
     // Handler-metodit
     void handleWifi(unsigned long now);

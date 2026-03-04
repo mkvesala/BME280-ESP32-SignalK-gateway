@@ -3,6 +3,11 @@
 #include <Preferences.h>
 #include "BME280Processor.h"
 
+// === C L A S S  B M E 2 8 0 P R E F E R E N C E S ===
+//
+// - Class BME280Preferences - responsible for NVS persistence
+// - Currently obsolete skeleton
+
 class BME280Preferences {
 
 public:
@@ -14,9 +19,9 @@ public:
 
 private:
     
-    const char* ns = "bme280";  // NVS namespace
+    const char* _ns = "bme280";  // NVS namespace
     
-    Preferences prefs;
-    BME280Processor &processor;
+    Preferences _prefs;
+    BME280Processor &_processor;
 
 };

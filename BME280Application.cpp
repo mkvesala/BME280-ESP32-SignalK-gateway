@@ -3,77 +3,81 @@
 
 // === P U B L I C ===
 
+// Constructor
 BME280Application::BME280Application()
-    : bme(),
-      processor(bme),
-      prefs(processor),
-      signalk(processor),
-      espnow(processor),
-      display(processor, signalk),
-      webui(processor, prefs, signalk, display) {}
+    : _bme(),
+      _processor(_bme),
+      _prefs(_processor),
+      _signalk(_processor),
+      _espnow(_processor),
+      _display(_processor, _signalk),
+      _webui(_processor, _prefs, _signalk, _display) {}
 
+// Initialize
 void BME280Application::begin() {
-    // 1. I2C
+    // I2C
     Wire.begin(I2C_SDA, I2C_SCL);
     delay(47);
 
-    // 2. LCD
-    display.begin();
+    // LCD
+    _display.begin();
 
-    // 3. Sensor and processor
-    sensor_ok = processor.begin(Wire, BME280_ADDR);
+    // Sensor and processor
+    _sensor_ok = _processor.begin(Wire, BME280_ADDR);
 
-    // 4. NVS
-    prefs.load();
+    // NVS
+    _prefs.load();
 
-    // 5. Stop bluetooth
+    // Stop bluetooth
     btStop();
 
-    // 6. WiFi AP+STA mode (ESP-NOW co-existence requirement)
+    // WiFi AP+STA mode (ESP-NOW co-existence requirement)
     WiFi.mode(WIFI_AP_STA);
     WiFi.setSleep(false);
     WiFi.begin(WIFI_SSID, WIFI_PASS);
-    wifi_state = WifiState::CONNECTING;
-    wifi_conn_start_ms = millis();
+    _wifi_state = WifiState::CONNECTING;
+    _wifi_conn_start_ms = millis();
 
-    // 7. ESP-NOW
-    espnow.begin();
+    // ESP-NOW
+    _espnow.begin();
 }
 
+// Loop - called in main loop()
 void BME280Application::loop() {
     const unsigned long now = millis();
-    handleWifi(now);
-    handleOTA();
-    handleWebUI();
-    handleWebsocket(now);
-    handleSensorRead(now);
-    handleSignalK(now);
-    handleESPNow(now);
-    handleDisplay();
+    this->handleWifi(now);
+    this->handleOTA();
+    this->handleWebUI();
+    this->handleWebsocket(now);
+    this->handleSensorRead(now);
+    this->handleSignalK(now);
+    this->handleESPNow(now);
+    this->handleDisplay();
 }
 
 // === P R I V A T E ===
 
+// WiFi handler for the loop()
 void BME280Application::handleWifi(unsigned long now) {
-    if ((long)(now - wifi_last_check_ms) < (long)WIFI_STATUS_CHECK_MS) return;
-    wifi_last_check_ms = now;
+    if ((long)(now - _wifi_last_check_ms) < (long)WIFI_STATUS_CHECK_MS) return;
+    _wifi_last_check_ms = now;
 
-    switch (wifi_state) {
+    switch (_wifi_state) {
         case WifiState::INIT:
             break;
 
         case WifiState::CONNECTING: {
             wl_status_t status = WiFi.status();
             if (status == WL_CONNECTED) {
-                wifi_state = WifiState::CONNECTED;
-                initWifiServices();
-                expn_retry_ms = WS_RETRY_MS;
-            } else if ((long)(now - wifi_conn_start_ms) >= (long)WIFI_TIMEOUT_MS) {
-                wifi_state = WifiState::OFF;
+                _wifi_state = WifiState::CONNECTED;
+                this->initWifiServices();
+                _expn_retry_ms = WS_RETRY_MS;
+            } else if ((long)(now - _wifi_conn_start_ms) >= (long)WIFI_TIMEOUT_MS) {
+                _wifi_state = WifiState::OFF;
                 WiFi.disconnect(true);
                 WiFi.mode(WIFI_OFF);
             } else if (status == WL_CONNECT_FAILED || status == WL_NO_SSID_AVAIL) {
-                wifi_state = WifiState::OFF;
+                _wifi_state = WifiState::OFF;
                 WiFi.disconnect(true);
                 WiFi.mode(WIFI_OFF);
             }
@@ -82,10 +86,10 @@ void BME280Application::handleWifi(unsigned long now) {
 
         case WifiState::CONNECTED:
             if (!WiFi.isConnected()) {
-                wifi_state = WifiState::CONNECTING;
+                _wifi_state = WifiState::CONNECTING;
                 WiFi.disconnect();
                 WiFi.begin(WIFI_SSID, WIFI_PASS);
-                wifi_conn_start_ms = now;
+                _wifi_conn_start_ms = now;
             }
             break;
 
@@ -96,61 +100,69 @@ void BME280Application::handleWifi(unsigned long now) {
     }
 }
 
+// Init WiFi-dependent stuff
 void BME280Application::initWifiServices() {
-    signalk.begin();
+    _signalk.begin();
 
-    ArduinoOTA.setHostname(signalk.getSignalKSource());
+    ArduinoOTA.setHostname(_signalk.getSignalKSource());
     ArduinoOTA.setPassword(OTA_PASS);
     ArduinoOTA.onStart([]() {});
     ArduinoOTA.onEnd([]() {});
     ArduinoOTA.onError([](ota_error_t e) { (void)e; });
     ArduinoOTA.begin();
 
-    webui.begin();
+    _webui.begin();
 }
 
+// OTA handler for the loop()
 void BME280Application::handleOTA() {
-    if (wifi_state != WifiState::CONNECTED) return;
+    if (_wifi_state != WifiState::CONNECTED) return;
     ArduinoOTA.handle();
 }
 
+// WebServer handler for the loop()
 void BME280Application::handleWebUI() {
-    if (wifi_state != WifiState::CONNECTED) return;
-    webui.handleRequest();
+    if (_wifi_state != WifiState::CONNECTED) return;
+    _webui.handleRequest();
 }
 
+// WebSocket handler for the loop()
 void BME280Application::handleWebsocket(unsigned long now) {
-    if (wifi_state != WifiState::CONNECTED) return;
-    signalk.handleStatus();
+    if (_wifi_state != WifiState::CONNECTED) return;
+    _signalk.handleStatus();
 
-    if (!signalk.isOpen() && (long)(now - next_ws_try_ms) >= 0) {
-        signalk.connectWebsocket();
-        next_ws_try_ms = now + expn_retry_ms;
-        expn_retry_ms = min(expn_retry_ms * 2, WS_RETRY_MAX_MS);
+    if (!_signalk.isOpen() && (long)(now - _next_ws_try_ms) >= 0) {
+        _signalk.connectWebsocket();
+        _next_ws_try_ms = now + _expn_retry_ms;
+        _expn_retry_ms = min(_expn_retry_ms * 2, WS_RETRY_MAX_MS);
     }
-    if (signalk.isOpen()) expn_retry_ms = WS_RETRY_MS;
+    if (_signalk.isOpen()) _expn_retry_ms = WS_RETRY_MS;
 }
 
+// Sensor reader for the loop()
 void BME280Application::handleSensorRead(unsigned long now) {
-    if ((long)(now - last_read_ms) < (long)READ_MS) return;
-    last_read_ms = now;
-    processor.update();
+    if ((long)(now - _last_read_ms) < (long)READ_MS) return;
+    _last_read_ms = now;
+    _processor.update();
 }
 
+// SignalK send handler for the loop()
 void BME280Application::handleSignalK(unsigned long now) {
-    if (wifi_state != WifiState::CONNECTED) return;
-    if ((long)(now - last_signalk_tx_ms) < (long)SIGNALK_TX_MS) return;
-    last_signalk_tx_ms = now;
-    signalk.sendDelta();
+    if (_wifi_state != WifiState::CONNECTED) return;
+    if ((long)(now - _last_signalk_tx_ms) < (long)SIGNALK_TX_MS) return;
+    _last_signalk_tx_ms = now;
+    _signalk.sendDelta();
 }
 
+// ESP-NOW handler for the loop()
 void BME280Application::handleESPNow(unsigned long now) {
-    espnow.processIncomingCommands();
-    if ((long)(now - last_espnow_tx_ms) < (long)ESPNOW_TX_MS) return;
-    last_espnow_tx_ms = now;
-    espnow.sendDelta();
+    _espnow.processIncomingCommands();
+    if ((long)(now - _last_espnow_tx_ms) < (long)ESPNOW_TX_MS) return;
+    _last_espnow_tx_ms = now;
+    _espnow.sendDelta();
 }
 
+// LCD handler for the loop()
 void BME280Application::handleDisplay() {
-    display.handle();
+    _display.handle();
 }
