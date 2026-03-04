@@ -20,9 +20,9 @@ private:
     bool initialized = false;
 
     // Deadband threasholds
-    static constexpr float DB_TEMP_C   = 0.1f;   // °C
-    static constexpr float DB_HUMIDITY = 0.5f;   // %
-    static constexpr float DB_PRES_HPA = 0.5f;   // hPa
+    static constexpr float DB_TEMP_C   = 0.0f;   // °C
+    static constexpr float DB_HUMIDITY = 0.0f;   // %
+    static constexpr float DB_PRES_HPA = 0.0f;   // hPa
 
     float last_temp_c       = NAN;
     float last_humidity     = NAN;

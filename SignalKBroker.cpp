@@ -111,8 +111,8 @@ void SignalKBroker::sendDelta() {
     };
 
     add("environment.outside.temperature", temp_k);
-    add("environment.outside.humidity",    humidity_r);
-    add("environment.outside.pressure",    pressure_pa);
+    add("environment.outside.relativeHumidity", humidity_r);
+    add("environment.outside.pressure", pressure_pa);
 
     char buf[640];
     size_t n = serializeJson(delta_doc, buf, sizeof(buf));

@@ -112,6 +112,9 @@ void BME280Application::initWifiServices() {
     ArduinoOTA.begin();
 
     _webui.begin();
+    Serial.println();
+    Serial.println(WiFi.macAddress());
+    Serial.println(WiFi.localIP());
 }
 
 // OTA handler for the loop()
