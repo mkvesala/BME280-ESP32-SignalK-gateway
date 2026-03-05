@@ -4,9 +4,13 @@
 
 using namespace websockets;
 
-SignalKBroker::SignalKBroker(BME280Processor &processorRef)
-    : processor(processorRef) {}
+// === P U B L I C ===
 
+// Constructor
+SignalKBroker::SignalKBroker(BME280Processor &processorRef)
+    : _processor(processorRef) {}
+
+// Initialize
 bool SignalKBroker::begin() {
     if (strlen(SK_HOST) == 0 || SK_PORT == 0) return false;
     this->setSignalKURL();
@@ -14,95 +18,62 @@ bool SignalKBroker::begin() {
     return this->connectWebsocket();
 }
 
+// Maintain websocket connection
 void SignalKBroker::handleStatus() {
-    if (ws_open) ws.poll();
+    if (_ws_open) _ws.poll();
 }
 
+// Connect websocket
 bool SignalKBroker::connectWebsocket() {
-    ws_open = ws.connect(SK_URL);
-    if (ws_open) {
-        ws.onMessage([this](WebsocketsMessage msg) {
+    _ws_open = _ws.connect(SK_URL);
+    if (_ws_open) {
+        _ws.onMessage([this](WebsocketsMessage msg) {
             this->onMessageCallback(msg);
         });
-        ws.onEvent([this](WebsocketsEvent event, const String &data) {
+        _ws.onEvent([this](WebsocketsEvent event, const String &data) {
             (void)data;
             this->onEventCallback(event);
         });
     }
-    return ws_open;
+    return _ws_open;
 }
 
+// Close websocket
 void SignalKBroker::closeWebsocket() {
-    ws.close();
-    ws_open = false;
+    _ws.close();
+    _ws_open = false;
 }
 
-void SignalKBroker::setSignalKURL() {
-    if (strlen(SK_TOKEN) > 0)
-        snprintf(SK_URL, sizeof(SK_URL),
-            "ws://%s:%d/signalk/v1/stream?token=%s", SK_HOST, SK_PORT, SK_TOKEN);
-    else
-        snprintf(SK_URL, sizeof(SK_URL),
-            "ws://%s:%d/signalk/v1/stream", SK_HOST, SK_PORT);
-}
-
-void SignalKBroker::setSignalKSource() {
-    uint8_t m[6];
-    esp_efuse_mac_get_default(m);
-    snprintf(SK_SOURCE, sizeof(SK_SOURCE), "esp32.bme280-%02x%02x%02x", m[3], m[4], m[5]);
-}
-
-void SignalKBroker::onEventCallback(WebsocketsEvent event) {
-    switch (event) {
-        case WebsocketsEvent::ConnectionOpened:
-            ws_open = true;
-            break;
-        case WebsocketsEvent::ConnectionClosed:
-            ws_open = false;
-            break;
-        case WebsocketsEvent::GotPing:
-            ws.pong();
-            break;
-        default:
-            break;
-    }
-}
-
-void SignalKBroker::onMessageCallback(WebsocketsMessage msg) {
-    if (!msg.isText()) return;
-    incoming_doc.clear();
-    deserializeJson(incoming_doc, msg.data());
-}
-
+// Send BME280 data to SignalK paths
 void SignalKBroker::sendDelta() {
-    if (!ws_open) return;
+    if (!_ws_open) return;
 
-    auto d = processor.getDelta();
+    auto d = _processor.getDelta();
     if (!validf(d.temperature_c) || !validf(d.humidity_p) || !validf(d.pressure_hpa)) return;
 
-    // Deadband: lähetä vain jos jokin arvo on muuttunut riittävästi
+    // Deadband
     bool changed = false;
-    if (!validf(last_temp_c)       || fabsf(d.temperature_c       - last_temp_c)       >= DB_TEMP_C)   changed = true;
-    if (!validf(last_humidity)     || fabsf(d.humidity_p     - last_humidity)     >= DB_HUMIDITY) changed = true;
-    if (!validf(last_pressure_hpa) || fabsf(d.pressure_hpa - last_pressure_hpa) >= DB_PRES_HPA) changed = true;
+    if (!validf(_last_temp_c) || fabsf(d.temperature_c - _last_temp_c) >= DB_TEMP_C) changed = true;
+    if (!validf(_last_humidity) || fabsf(d.humidity_p - _last_humidity) >= DB_HUMIDITY) changed = true;
+    if (!validf(_last_pressure_hpa) || fabsf(d.pressure_hpa - _last_pressure_hpa) >= DB_PRES_HPA) changed = true;
     if (!changed) return;
 
-    last_temp_c       = d.temperature_c;
-    last_humidity     = d.humidity_p;
-    last_pressure_hpa = d.pressure_hpa;
+    _last_temp_c = d.temperature_c;
+    _last_humidity = d.humidity_p;
+    _last_pressure_hpa = d.pressure_hpa;
 
-    // SI-muunnokset SignalK:ta varten
-    float temp_k       = d.temperature_c + 273.15f;
-    float humidity_r   = d.humidity_p / 100.0f;
-    float pressure_pa  = d.pressure_hpa * 100.0f;
+    // SI units for SignalK
+    float temp_k = d.temperature_c + 273.15f;    // kelvin
+    float humidity_r = d.humidity_p / 100.0f;    // ratio
+    float pressure_pa = d.pressure_hpa * 100.0f; // pascal
 
-    // Rakenna SignalK delta JSON
-    delta_doc.clear();
-    delta_doc["context"] = "vessels.self";
-    auto updates = delta_doc.createNestedArray("updates");
-    auto up      = updates.createNestedObject();
+    // Build SignalK delta
+    _delta_doc.clear();
+    _delta_doc["context"] = "vessels.self";
+    auto updates = _delta_doc.createNestedArray("updates");
+    auto up = updates.createNestedObject();
     up["$source"] = SK_SOURCE;
-    auto values  = up.createNestedArray("values");
+    auto values = up.createNestedArray("values");
 
     auto add = [&](const char* path, float v) {
         auto o = values.createNestedObject();
@@ -115,10 +86,53 @@ void SignalKBroker::sendDelta() {
     add("environment.outside.pressure", pressure_pa);
 
     char buf[640];
-    size_t n = serializeJson(delta_doc, buf, sizeof(buf));
-    bool ok = ws.send(buf, n);
+    size_t n = serializeJson(_delta_doc, buf, sizeof(buf));
+    bool ok = _ws.send(buf, n);
     if (!ok) {
-        ws.close();
-        ws_open = false;
+        _ws.close();
+        _ws_open = false;
     }
+}
+
+// === P R I V A T E ===
+
+// Create SignalK URL for websocket
+void SignalKBroker::setSignalKURL() {
+    if (strlen(SK_TOKEN) > 0)
+        snprintf(SK_URL, sizeof(SK_URL),
+            "ws://%s:%d/signalk/v1/stream?token=%s", SK_HOST, SK_PORT, SK_TOKEN);
+    else
+        snprintf(SK_URL, sizeof(SK_URL),
+            "ws://%s:%d/signalk/v1/stream", SK_HOST, SK_PORT);
+}
+
+// Set source name for SignalK
+void SignalKBroker::setSignalKSource() {
+    uint8_t m[6];
+    esp_efuse_mac_get_default(m);
+    snprintf(SK_SOURCE, sizeof(SK_SOURCE), "esp32.bme280-%02x%02x%02x", m[3], m[4], m[5]);
+}
+
+// Websocket callback
+void SignalKBroker::onEventCallback(WebsocketsEvent event) {
+    switch (event) {
+        case WebsocketsEvent::ConnectionOpened:
+            _ws_open = true;
+            break;
+        case WebsocketsEvent::ConnectionClosed:
+            _ws_open = false;
+            break;
+        case WebsocketsEvent::GotPing:
+            _ws.pong();
+            break;
+        default:
+            break;
+    }
+}
+
+// Websocket callback
+void SignalKBroker::onMessageCallback(WebsocketsMessage msg) {
+    if (!msg.isText()) return;
+    _incoming_doc.clear();
+    deserializeJson(_incoming_doc, msg.data());
 }

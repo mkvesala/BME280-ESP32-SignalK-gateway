@@ -4,6 +4,14 @@
 #include "BME280Processor.h"
 #include "SignalKBroker.h"
 
+// === C L A S S  D I S P L A Y M A N A G E R ===
+//
+// - Class DisplayManager - responsible for managing LCD or other display
+// - Init: _display.begin();
+// - Loop: _display.handle();
+// - Uses: BME280Processor, SignalKBroker
+// - Owned by: BME280Application
+
 class DisplayManager {
 
 public:
@@ -19,9 +27,9 @@ private:
     static constexpr uint8_t LCD_COLS = 16;
     static constexpr uint8_t LCD_ROWS = 2;
 
-    LiquidCrystal_I2C lcd;
-    bool lcd_found = false;
+    LiquidCrystal_I2C _lcd;
+    bool _lcd_found = false;
 
-    BME280Processor &processor;
-    SignalKBroker   &signalk;
+    BME280Processor &_processor;
+    SignalKBroker &_signalk;
 };

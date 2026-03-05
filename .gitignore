@@ -1,3 +1,6 @@
+plugin-config-data/
+plugin_config_data/
+
 secrets.h
 secrets.f*.h
 

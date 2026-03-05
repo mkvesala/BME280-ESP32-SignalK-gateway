@@ -9,7 +9,6 @@ BME280Preferences::BME280Preferences(BME280Processor &processorRef)
 // Load from NVS
 void BME280Preferences::load() {
     if (!_prefs.begin(_ns, true)) return;
-    _processor.setTempOffset(_prefs.getFloat("temp_offset", 0.0f));
     _prefs.end();
 }
 

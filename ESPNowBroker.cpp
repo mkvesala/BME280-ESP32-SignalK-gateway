@@ -1,46 +1,48 @@
 #include "ESPNowBroker.h"
 #include "helpers.h"
 
-// Static
-volatile bool ESPNowBroker::command_received = false;
-uint8_t ESPNowBroker::last_sender_mac[6] = {0};
+// == P U B L I C ===
 
+// Constructor
 ESPNowBroker::ESPNowBroker(BME280Processor &processorRef)
-    : processor(processorRef) {}
+    : _processor(processorRef) {}
 
+// Initialize
 bool ESPNowBroker::begin() {
     if (esp_now_init() != ESP_OK) return false;
 
-    // Rekisteröi broadcast-peer (channel=0 = käytä WiFin nykyistä kanavaa)
+    // Register broadcast peer
     esp_now_peer_info_t peer = {};
     memcpy(peer.peer_addr, BROADCAST_ADDR, 6);
     peer.channel = 0;
     peer.encrypt = false;
     if (esp_now_add_peer(&peer) != ESP_OK) return false;
 
+    // Register callbacks
     esp_now_register_send_cb(onDataSent);
     esp_now_register_recv_cb(onDataRecv);
 
-    initialized = true;
-    return true;
+    _initialized = true;
+    return _initialized;
 }
 
+// Send BME280 data as ESP-NOW broadcast
 void ESPNowBroker::sendDelta() {
-    if (!initialized) return;
+    if (!_initialized) return;
 
-    auto d = processor.getDelta();
+    auto d = _processor.getDelta();
     if (!validf(d.temperature_c) || !validf(d.humidity_p) || !validf(d.pressure_hpa)) return;
 
     // Deadband
     bool changed = false;
-    if (!validf(last_temp_c)       || fabsf(d.temperature_c       - last_temp_c)       >= DB_TEMP_C)   changed = true;
-    if (!validf(last_humidity)     || fabsf(d.humidity_p     - last_humidity)     >= DB_HUMIDITY) changed = true;
-    if (!validf(last_pressure_hpa) || fabsf(d.pressure_hpa - last_pressure_hpa) >= DB_PRES_HPA) changed = true;
+    if (!validf(_last_temp_c) || fabsf(d.temperature_c - _last_temp_c) >= DB_TEMP_C) changed = true;
+    if (!validf(_last_humidity) || fabsf(d.humidity_p - _last_humidity) >= DB_HUMIDITY) changed = true;
+    if (!validf(_last_pressure_hpa) || fabsf(d.pressure_hpa - _last_pressure_hpa) >= DB_PRES_HPA) changed = true;
     if (!changed) return;
 
-    last_temp_c       = d.temperature_c;
-    last_humidity     = d.humidity_p;
-    last_pressure_hpa = d.pressure_hpa;
+    _last_temp_c       = d.temperature_c;
+    _last_humidity     = d.humidity_p;
+    _last_pressure_hpa = d.pressure_hpa;
 
     // Build ESPNowPacket: header + WeatherDelta payload
     ESPNow::ESPNowPacket<ESPNow::WeatherDelta> pkt;
@@ -50,10 +52,11 @@ void ESPNowBroker::sendDelta() {
     esp_now_send(BROADCAST_ADDR, reinterpret_cast<const uint8_t*>(&pkt), sizeof(pkt));
 }
 
+// Process inbound commands
 void ESPNowBroker::processIncomingCommands() {
     // Not implemented in this version
-    if (!command_received) return;
-    command_received = false;
+    if (!_command_received) return;
+    _command_received = false;
 }
 
 // Static callback

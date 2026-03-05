@@ -1,6 +1,8 @@
 #pragma once
 #include <Arduino.h>
 
+// === E N U M  C L A S S  W I F I S T A T E ===
+
 enum class WifiState : uint8_t {
     INIT            = 0,
     CONNECTING      = 1,

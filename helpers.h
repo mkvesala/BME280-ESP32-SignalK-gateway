@@ -1,5 +1,5 @@
 #pragma once
 #include <cmath>
 
-// Float-validaattori - käytössä kaikkialla
+// Float validator
 inline bool validf(float x) { return !isnan(x) && isfinite(x); }
