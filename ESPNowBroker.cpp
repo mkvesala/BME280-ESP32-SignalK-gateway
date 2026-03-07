@@ -1,3 +1,4 @@
+#include "espnow_protocol.h"
 #include "ESPNowBroker.h"
 #include "helpers.h"
 
@@ -26,6 +27,21 @@ bool ESPNowBroker::begin() {
     return _initialized;
 }
 
+// Send a dummy delta for testing purposes
+void ESPNowBroker::sendTestDelta() {
+    delay(1);
+    ESPNow::BatteryDelta bd;
+    bd.house_current = randomFloat(0.0f, 10.0f);
+    bd.house_soc = randomFloat(90.0f, 92.0f);
+    bd.start_voltage = randomFloat(27.0f, 29.0f);
+    bd.house_voltage = randomFloat(25.0f, 27.0f);
+    bd.house_power = bd.house_voltage * bd.house_current;
+    ESPNow::ESPNowPacket<ESPNow::BatteryDelta> tpkt;
+    ESPNow::initHeader(tpkt.hdr, ESPNow::ESPNowMsgType::BATTERY_DELTA, sizeof(ESPNow::BatteryDelta));
+    memcpy(&tpkt.payload, &bd, sizeof(ESPNow::BatteryDelta));
+    esp_now_send(BROADCAST_ADDR, reinterpret_cast<const uint8_t*>(&tpkt), sizeof(tpkt));
+}
+
 // Send BME280 data as ESP-NOW broadcast
 void ESPNowBroker::sendDelta() {
     if (!_initialized) return;
@@ -50,6 +66,7 @@ void ESPNowBroker::sendDelta() {
     memcpy(&pkt.payload, &d, sizeof(ESPNow::WeatherDelta));
 
     esp_now_send(BROADCAST_ADDR, reinterpret_cast<const uint8_t*>(&pkt), sizeof(pkt));
+    this->sendTestDelta(); // remove, testing only
 }
 
 // Process inbound commands

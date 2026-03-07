@@ -22,6 +22,8 @@ public:
     void sendDelta();
     void processIncomingCommands();
 
+    void sendTestDelta(); // for testing purposes
+
 private:
 
     BME280Processor &_processor;
