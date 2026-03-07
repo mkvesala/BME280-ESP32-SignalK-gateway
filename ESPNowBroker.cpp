@@ -31,10 +31,13 @@ bool ESPNowBroker::begin() {
 void ESPNowBroker::sendTestDelta() {
     delay(1);
     ESPNow::BatteryDelta bd;
-    bd.house_current = randomFloat(0.0f, 10.0f);
-    bd.house_soc = randomFloat(90.0f, 92.0f);
-    bd.start_voltage = randomFloat(27.0f, 29.0f);
-    bd.house_voltage = randomFloat(25.0f, 27.0f);
+    _test_a = testData(_test_a, 8.0f, 12.0f, 0.01f);
+    _test_p = testData(_test_p, 90.0f, 94.0f, 0.001f);
+    _test_v = testData(_test_v, 26.0f, 29.0f, 0.01f);
+    bd.house_current = _test_a;
+    bd.house_voltage = _test_v;
+    bd.house_soc = _test_p;
+    bd.start_voltage = _test_v;
     bd.house_power = bd.house_voltage * bd.house_current;
     ESPNow::ESPNowPacket<ESPNow::BatteryDelta> tpkt;
     ESPNow::initHeader(tpkt.hdr, ESPNow::ESPNowMsgType::BATTERY_DELTA, sizeof(ESPNow::BatteryDelta));

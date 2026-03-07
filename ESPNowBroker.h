@@ -38,6 +38,11 @@ private:
     float _last_humidity     = NAN;
     float _last_pressure_hpa = NAN;
 
+    // test data
+    float _test_v = 27.2f;
+    float _test_a = 10.0f;
+    float _test_p = 92.0f;
+
     static constexpr uint8_t BROADCAST_ADDR[6] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
 
     // Static callbacks
