@@ -5,23 +5,25 @@
 [![Platform: ESP32](https://img.shields.io/badge/Platform-ESP32-blue)](https://www.espressif.com/en/sdks/esp-arduino)
 [![Sensor: BME280](https://img.shields.io/badge/Sensor-BME280-lightgrey)](https://www.bosch-sensortec.com/products/environmental-sensors/humidity-sensors-bme280/)
 [![Server: SignalK](https://img.shields.io/badge/Server-SignalK-orange)](https://signalk.org)
+[![Protocol: WebSocket](https://img.shields.io/badge/Protocol-WebSocket-red)](https://github.com/gilmaimon/ArduinoWebsockets)
+[![Protocol: ESP-NOW](https://img.shields.io/badge/Protocol-ESP--NOW-red)](https://www.espressif.com/en/solutions/low-power-solutions/esp-now)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
 ESP32-based reader for Bosch [BME280](https://www.bosch-sensortec.com/products/environmental-sensors/humidity-sensors-bme280/) environmental sensor. Sends temperature, relative humidity and barometric pressure to [SignalK](https://signalk.org) server via WebSocket/JSON and to other ESP32 devices via ESP-NOW broadcast.
 
-Optionally shows live readings on a 16×2 LCD display. If no WiFi is available the sensor still broadcasts via ESP-NOW.
+Optionally shows live readings on a 16x2 LCD display. If no WiFi is available the sensor still broadcasts via ESP-NOW.
 
 OTA firmware updates are enabled. Persistent configuration storage (NVS) and web UI are skeleton-implemented and reserved for future use.
 
 Developed and tested on:
 - Generic ESP32 development board (ESP-WROOM-32)
-- [ESP32 board package](https://github.com/espressif/arduino-esp32) (3.3.5)
-- [Arduino IDE](https://www.arduino.cc/en/software/) (2.3.6)
-- SignalK Server (2.18.0)
+- [ESP32 board package](https://github.com/espressif/arduino-esp32) (3.3.7)
+- [Arduino IDE](https://www.arduino.cc/en/software/) (2.3.8)
+- SignalK Server (2.23.0)
 - BME280 sensor
 
 Integrated via ESP-NOW to:
-- [Elecrow CrowPanel 2.1inch-HMI ESP32 Rotary Display 480×480 IPS Round Touch Knob Screen](https://www.elecrow.com/wiki/CrowPanel_2.1inch-HMI_ESP32_Rotary_Display_480_IPS_Round_Touch_Knob_Screen.html) separate ESP32 device
+- [Elecrow CrowPanel 2.1inch-HMI ESP32 Rotary Display 480x480 IPS Round Touch Knob Screen](https://www.elecrow.com/wiki/CrowPanel_2.1inch-HMI_ESP32_Rotary_Display_480_IPS_Round_Touch_Knob_Screen.html) separate ESP32 device
 
 ## Purpose of the project
 
@@ -115,7 +117,7 @@ Each class with their full public API. Private attributes only to demonstrate cl
 - Owns: `LiquidCrystal_I2C`
 - Uses: `BME280Processor`, `SignalKBroker`
 - Owned by: `BME280Application`
-- Responsible for: optional LCD 16×2 display
+- Responsible for: optional LCD 16x2 display
 
 **`WebUIManager`:**
 - Owns: `WebServer`
@@ -152,7 +154,7 @@ ws://<server>:<port>/signalk/v1/stream?token=<optional>
 |---|---|---|
 | `environment.outside.temperature` | Kelvin | °C + 273.15 |
 | `environment.outside.relativeHumidity` | ratio 0–1 | % / 100 |
-| `environment.outside.pressure` | Pascal | hPa × 100 |
+| `environment.outside.pressure` | Pascal | hPa x 100 |
 
 Source name is auto-derived from the device MAC address: `esp32.bme280-XXYYZZ`.
 
@@ -176,7 +178,7 @@ Broadcasts weather data via ESP-NOW for other ESP32 devices, such as external di
 
 **Note: ESP-NOW receivers must be on the same WiFi channel as this device. The simplest approach is to connect both devices to the same WiFi network with a fixed channel.**
 
-### LCD 16×2 display
+### LCD 16x2 display
 
 1. Shows live temperature, humidity and pressure on two rows:
    - Row 0: `T:23.5C  H:65.2%`
@@ -220,7 +222,7 @@ Using a different display can be done within the `DisplayManager` class while en
 
 1. ESP32 module (any standard ESP-WROOM-32 development board)
 2. BME280 sensor (I2C mode, address 0x77)
-3. LCD 16×2 module with I2C backpack (optional, address 0x27)
+3. LCD 16x2 module with I2C backpack (optional, address 0x27)
 4. Wiring — I2C bus (SDA GPIO21, SCL GPIO22) shared by BME280 and LCD
 5. WiFi router providing wireless LAN AP
 6. SignalK server running in LAN
