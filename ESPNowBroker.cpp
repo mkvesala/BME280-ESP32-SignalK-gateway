@@ -27,24 +27,6 @@ bool ESPNowBroker::begin() {
     return _initialized;
 }
 
-// Send a dummy delta for testing purposes
-void ESPNowBroker::sendTestDelta() {
-    delay(1);
-    ESPNow::BatteryDelta bd;
-    _test_a = testData(_test_a, 8.0f, 12.0f, 0.01f);
-    _test_p = testData(_test_p, 90.0f, 94.0f, 0.001f);
-    _test_v = testData(_test_v, 26.0f, 29.0f, 0.01f);
-    bd.house_current = _test_a;
-    bd.house_voltage = _test_v;
-    bd.house_soc = _test_p;
-    bd.start_voltage = _test_v;
-    bd.house_power = bd.house_voltage * bd.house_current;
-    ESPNow::ESPNowPacket<ESPNow::BatteryDelta> tpkt;
-    ESPNow::initHeader(tpkt.hdr, ESPNow::ESPNowMsgType::BATTERY_DELTA, sizeof(ESPNow::BatteryDelta));
-    memcpy(&tpkt.payload, &bd, sizeof(ESPNow::BatteryDelta));
-    esp_now_send(BROADCAST_ADDR, reinterpret_cast<const uint8_t*>(&tpkt), sizeof(tpkt));
-}
-
 // Send BME280 data as ESP-NOW broadcast
 void ESPNowBroker::sendDelta() {
     if (!_initialized) return;
@@ -69,7 +51,6 @@ void ESPNowBroker::sendDelta() {
     memcpy(&pkt.payload, &d, sizeof(ESPNow::WeatherDelta));
 
     esp_now_send(BROADCAST_ADDR, reinterpret_cast<const uint8_t*>(&pkt), sizeof(pkt));
-    this->sendTestDelta(); // remove, testing only
 }
 
 // Process inbound commands

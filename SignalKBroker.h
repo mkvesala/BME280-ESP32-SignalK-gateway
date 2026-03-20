@@ -15,7 +15,7 @@
 //  - Get connection status and source name
 //  - Send BME280 data to SignalK paths
 // - Uses: BME280Processor
-// - Owns: WebSocket
+// - Owns: WebsocketsClient
 // - Owned by: BME280Application
 
 class SignalKBroker {

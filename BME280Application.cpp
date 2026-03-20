@@ -102,8 +102,10 @@ void BME280Application::handleWifi(unsigned long now) {
 
 // Init WiFi-dependent stuff
 void BME280Application::initWifiServices() {
+    // SignalK websocket
     _signalk.begin();
 
+    // OTA
     ArduinoOTA.setHostname(_signalk.getSignalKSource());
     ArduinoOTA.setPassword(OTA_PASS);
     ArduinoOTA.onStart([]() {});
@@ -111,7 +113,9 @@ void BME280Application::initWifiServices() {
     ArduinoOTA.onError([](ota_error_t e) { (void)e; });
     ArduinoOTA.begin();
 
+    // WebServer (not implemented in this version)
     _webui.begin();
+    
     Serial.println();
     Serial.println(WiFi.macAddress());
     Serial.println(WiFi.localIP());

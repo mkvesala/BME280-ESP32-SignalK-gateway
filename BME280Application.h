@@ -68,7 +68,7 @@ private:
     DisplayManager    _display;
     WebUIManager      _webui;
 
-    // Handler-metodit
+    // Handlers for app.loop()
     void handleWifi(unsigned long now);
     void handleOTA();
     void handleWebUI();
