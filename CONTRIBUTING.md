@@ -21,9 +21,8 @@ Before creating bug reports, please check existing issues to avoid duplicates. W
   - ESP32 board package version
   - Hardware used
   - Library versions
-  - CMPS14 firmware version
-- Output (Serial monitor, LCD, LEDs)
-- Screenshots, if applicable, especially for web UI issues
+- Output (Serial monitor, LCD)
+- Screenshots, if applicable
 
 ### Suggesting Features
 
@@ -80,7 +79,7 @@ Feature requests are welcome! Please:
 4. Naming:
    - Classes `PascalCase`
    - Functions/methods `camelCase`
-   - Variables `camelCase` or `snake_case` - be consistent
+   - Variables `snake_case`
    - Constants `UPPER_SNAKE_CASE`
    - Timers: use `_ms`, `_MS`, `_us` to indicate the units for example `NEXT_TRY_MS`
 5. Use `//` in single line comments
@@ -89,22 +88,19 @@ Feature requests are welcome! Please:
 8. Use `delay()` in loop task *only* when absolutely necessary
 9. Minimize dynamic memory allocation - prefer stack allocation
 10. Handle I2C with care and prefer returning `bool` in methods which communicate with I2C
-11. Avoid making the currently lengthy web UI html/js parsing any more complex
-12. Respect ESP32 limited resources and core 0/core 1 task responsibilities if such applied
+11. Respect ESP32 limited resources and core 0/core 1 task responsibilities if such applied
 
 ## Testing checklist
 
 * [ ] ESP32 boots without errors
-* [ ] CMPS14Sensor read works
-* [ ] LCD displays promptly
-* [ ] Wifi connects and reports a valid IP address
-* [ ] SignalK websocket connection established, `ws_open` behaves well on client, server lists ESP32 source
-* [ ] SignalK data flows, server paths update in Data Browser and magnetic variation on client side
-* [ ] Web UI accessible and it works with no delays
-* [ ] All web UI buttons and forms work promptly
-* [ ] LED indicators show correctly
-* [ ] Calibration mode logic is solid
-* [ ] Deviations compute correctly
+* [ ] BME280 sensor read works — temperature, humidity and pressure all return valid values
+* [ ] Invalid readings (`NaN`, infinite) are discarded and not forwarded
+* [ ] LCD displays promptly (if connected); boot continues normally if LCD is absent
+* [ ] WiFi connects and reports a valid IP address
+* [ ] SignalK WebSocket connection established, `ws_open` behaves well on client, server lists ESP32 source
+* [ ] SignalK data flows — `environment.outside.temperature`, `environment.outside.relativeHumidity` and `environment.outside.pressure` update in Data Browser with correct units
+* [ ] WebSocket reconnects automatically after server restart or network drop
+* [ ] ESP-NOW broadcasts arrive at the receiver device with correct values
 * [ ] OTA updates are successful
 * [ ] No memory leaks (monitor)
 * [ ] Task runtimes and stack watermarks stay in reasonable limits (monitor)
@@ -116,19 +112,18 @@ Feature requests are welcome! Please:
 
 [README.md](README.md) for details.
 
-- Arduino IDE 2.3.6
-- ESP32 board package 3.3.5
+- Arduino IDE 2.3.8
+- ESP32 board package 3.3.7
 - Required libraries
-- SignalK server 2.18.0
+- SignalK server 2.23.0
 
 ### Hardware requirements
 
 [README.md](README.md) for details.
 
 - ESP32 development board
-- CMPS14 sensor in I2C mode
+- BME280 sensor in I2C mode
 - (Optional) LCD 16x2 display with I2C backpack
-- (Optional) LEDs for status indicators
 
 ## AI-assisted development
 
