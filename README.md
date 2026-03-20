@@ -9,28 +9,28 @@
 [![Protocol: ESP-NOW](https://img.shields.io/badge/Protocol-ESP--NOW-red)](https://www.espressif.com/en/solutions/low-power-solutions/esp-now)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-ESP32-based reader for Bosch [BME280](https://www.bosch-sensortec.com/products/environmental-sensors/humidity-sensors-bme280/) environmental sensor. Sends temperature, relative humidity and barometric pressure to [SignalK](https://signalk.org) server via WebSocket/JSON and to other ESP32 devices via ESP-NOW broadcast.
+ESP32-based reader for [BME280](https://www.bosch-sensortec.com/products/environmental-sensors/humidity-sensors-bme280/) environmental sensor. Sends temperature, relative humidity and barometric pressure to [SignalK](https://signalk.org) server via WebSocket/JSON and to other ESP32 devices via ESP-NOW broadcast.
 
 Optionally shows live readings on a 16x2 LCD display. If no WiFi is available the sensor still broadcasts via ESP-NOW.
 
 OTA firmware updates are enabled. Persistent configuration storage (NVS) and web UI are skeleton-implemented and reserved for future use.
 
 Developed and tested on:
-- Generic ESP32 development board (ESP-WROOM-32)
+- [NodeMCU ESP32 development board (ESP-WROOM-32)](https://joy-it.net/en/products/SBC-NodeMCU-ESP32)
 - [ESP32 board package](https://github.com/espressif/arduino-esp32) (3.3.7)
 - [Arduino IDE](https://www.arduino.cc/en/software/) (2.3.8)
 - SignalK Server (2.23.0)
-- BME280 sensor
+- [Crowtail BME280 atmospheric sensor](https://www.elecrow.com/crowtail-bme280-atmospheric-sensor.html?srsltid=AfmBOoqz8N42UlkOzulReRqNCtjRw_tAOI5-S-jgCNO6rQSgmIyVBUtu) (2.0)
 
 Integrated via ESP-NOW to:
-- [Elecrow CrowPanel 2.1inch-HMI ESP32 Rotary Display 480x480 IPS Round Touch Knob Screen](https://www.elecrow.com/wiki/CrowPanel_2.1inch-HMI_ESP32_Rotary_Display_480_IPS_Round_Touch_Knob_Screen.html) separate ESP32 device
+- [ESP32-Crowpanel-compass](https://github.com/mkvesala/ESP32-Crowpanel-compass) (v2.0.0)
 
 ## Purpose of the project
 
-This is one of my individual digital boat projects. Use at your own risk. Not for safety-critical navigation.
+This is one of my individual digital boat projects. Use at your own risk. Not for safety-critical operations.
 
-1. I needed reliable outside weather data (temperature, humidity, pressure) available in SignalK and on the vessel's ESP-NOW data bus
-2. I wanted to continue building on the ESP32 gateway design pattern established in previous projects (VEDirect, CMPS14)
+1. I needed reliable outside weather data (temperature, humidity, pressure) available in SignalK and on the vessel's ESP-NOW peer-to-peer network
+2. I wanted to continue building on the ESP32 gateway design pattern established in previous projects
 3. The BME280 makes for a simple first implementation of the shared `espnow_protocol.h` `WeatherDelta` message type
 
 ## Release history
@@ -41,50 +41,7 @@ This is one of my individual digital boat projects. Use at your own risk. Not fo
 
 ## Classes
 
-### Class BME280Processor
-
-The central data class `BME280Processor` reads the BME280 sensor over I2C and exposes the measurements. It has the following public API:
-
-| Method | Returns | Comment |
-|--------|---------|---------|
-| `begin(TwoWire &wirePort, uint8_t addr)` | `bool` | Initialize sensor at given I2C address |
-| `update()` | `bool` | Read sensor and update internal data struct; returns false if any reading is invalid |
-| `getDelta()` | `ESPNow::WeatherDelta` | Return current readings as a `WeatherDelta` struct |
-| `getTempC()` | `float` | Temperature in °C |
-| `getHumidity()` | `float` | Relative humidity in % |
-| `getPressureHPa()` | `float` | Barometric pressure in hPa |
-
-The simple usage of BME280Processor could be:
-
-```cpp
-#include <Arduino.h>
-#include <Wire.h>
-#include <Adafruit_BME280.h>
-#include "BME280Processor.h"
-
-Adafruit_BME280 bme;
-BME280Processor processor(bme);
-
-void setup() {
-    Serial.begin(115200);
-    Wire.begin(21, 22); // SDA, SCL
-    processor.begin(Wire, 0x77);
-}
-
-void loop() {
-    const unsigned long now = millis();
-    static unsigned long last = 0;
-    if ((long)(now - last) < 1000) return; // Read at 1 Hz
-    last = now;
-    if (processor.update()) {
-        Serial.println(processor.getTempC());
-        Serial.println(processor.getHumidity());
-        Serial.println(processor.getPressureHPa());
-    }
-}
-```
-
-### Other classes
+### Classes
 
 <!-- Class diagram here -->
 
@@ -138,8 +95,7 @@ Each class with their full public API. Private attributes only to demonstrate cl
 ### Sensor reading
 
 1. Reads temperature (°C), relative humidity (%) and barometric pressure (hPa) from BME280 over I2C at ~1 Hz
-2. Validates each reading with `validf()` — `NaN` and infinite values are discarded
-3. Readings are stored as an `ESPNow::WeatherDelta` struct and shared with all subsystems
+2. Readings are stored as an `ESPNow::WeatherDelta` struct and shared with all subsystems
 
 ### SignalK communication
 
@@ -162,7 +118,7 @@ WebSocket reconnects automatically with exponential back-off starting at ~2 s, d
 
 ### ESP-NOW communication
 
-Broadcasts weather data via ESP-NOW for other ESP32 devices, such as external displays (e.g., CrowPanel 2.1" HMI).
+Broadcasts weather data via ESP-NOW for other ESP32 devices, such as external displays (e.g. ESP32-Crowpanel-compass on CrowPanel 2.1" HMI rotary screen).
 
 **Sends** at ~0.5 Hz frequency with optional deadband filtering (deadband set to 0.0 in this release):
 - `WeatherDelta` struct containing:
@@ -184,7 +140,6 @@ Broadcasts weather data via ESP-NOW for other ESP32 devices, such as external di
    - Row 0: `T:23.5C  H:65.2%`
    - Row 1: `P:1013.2 hPa`
 2. LCD is auto-detected at startup via I2C probe — device boots normally if no display is present
-3. Startup splash: `BME280 Gateway` / `Connecting...`
 
 Using a different display can be done within the `DisplayManager` class while ensuring its public API stays intact.
 
@@ -231,13 +186,14 @@ Using a different display can be done within the `DisplayManager` class while en
 
 ## Software used
 
-1. Arduino IDE 2.3.6
-2. Espressif Systems esp32 board package 3.3.5
+1. Arduino IDE 2.3.8
+2. Espressif Systems esp32 board package 3.3.7
 3. Additional libraries installed:
-   - Adafruit BME280 Library (by Adafruit, version 2.2.4)
-   - Adafruit Unified Sensor (by Adafruit, version 1.1.14)
+   - Adafruit BME280 Library (by Adafruit, version 2.3.0)
+   - Adafruit Unified Sensor (by Adafruit, version 1.1.15)
+   - Adafruit BusIO (by Adafruit, version 1.17.4)
    - ArduinoWebsockets (by Gil Maimon, version 0.5.4)
-   - ArduinoJson (by Benoit Blanchon, version 7.4.2)
+   - ArduinoJson (by Benoit Blanchon, version 7.4.3)
    - LiquidCrystal_I2C (by Frank de Brabander, version 1.1.2)
 
 ## Installation
@@ -260,20 +216,12 @@ Using a different display can be done within the `DisplayManager` class while en
 5. Connect BME280 to the I2C pins (SDA GPIO21, SCL GPIO22) and optionally connect LCD to the same I2C bus
 6. Connect and power up the ESP32 with the USB cable
 7. Compile and upload with Arduino IDE (ESP32 board package and required libraries installed)
-8. Monitor Serial output (115200 baud) to verify sensor readings and WiFi/SignalK connection status
-
-## Todo
-
-- Implement `WebUIManager` — simple web UI for viewing live readings and adjusting settings
-- Implement `BME280Preferences` — NVS persistence for user-adjustable temperature offset
-- Add web UI authentication once `WebUIManager` is implemented
-- Consider an asynchronous `esp_http_server` to replace the `WebServer` to avoid `loop()` blocking
 
 ## Security
 
 ### Maritime navigation
 
-**Use at your own risk — not for safety-critical navigation!**
+**Use at your own risk — not for safety-critical operations!**
 
 ### Important security considerations
 
@@ -307,15 +255,15 @@ Using a different display can be done within the `DisplayManager` class while en
 
 Developed and tested using:
 
-- Generic ESP32 development board (ESP-WROOM-32)
-- Espressif Systems esp32 3.3.5 package on Arduino IDE 2.3.6
-- SignalK Server version 2.18.0
+- NodeMCU ESP32 development board (ESP-WROOM-32)
+- Espressif Systems esp32 3.3.7 package on Arduino IDE 2.3.8
+- SignalK Server version 2.23.0
+
+Developed by Matti Vesala in collaboration with Claude (Anthropic).
 
 Check [CONTRIBUTING.md](CONTRIBUTING.md) for further information on AI-assisted development in the project.
 
-Developed by Matti Vesala in collaboration with Claude (Anthropic). Claude was used as the primary coding partner for architecture design, implementation and code review.
-
-I would highly appreciate improvement suggestions as well as any Arduino-style ESP32/C++ coding advice before entering into SensESP/PlatformIO universe in my next project. 😃
+I would highly appreciate improvement suggestions as well as any Arduino-style ESP32/C++ coding advice.
 
 ## Gallery
 
