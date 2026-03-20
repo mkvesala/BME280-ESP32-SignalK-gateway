@@ -63,7 +63,15 @@
   <text x="118" y="58" font-family="monospace" font-size="9"
         fill="#3fb950" opacity="0.8">°C</text>
 
-  <!-- Text block: project name -->
+ <!-- hPa label -->
+  <text x="55" y="140" font-family="monospace" font-size="9"
+        fill="#3fb950" opacity="0.8">hPa</text>
+
+ <!-- hum% label -->
+  <text x="130" y="140" font-family="monospace" font-size="9"
+        fill="#3fb950" opacity="0.8">Hum-%</text>  
+
+<!-- Text block: project name -->
   <text x="210" y="68" font-family="monospace" font-size="20"
         font-weight="bold" fill="#ffffff">BME280-ESP32-SignalK</text>
   <text x="210" y="94" font-family="monospace" font-size="20"
@@ -79,12 +87,16 @@
         fill="#8b949e">BME280·ESP32·SignalK·ESP-NOW</text>
 
   <!-- Badges row -->
-  <rect x="210" y="150" width="68" height="18" rx="4" fill="#1a3a20"/>
+  <rect x="210" y="150" width="70" height="18" rx="4" fill="#1a3a20"/>
   <text x="244" y="163" text-anchor="middle" font-family="monospace" font-size="10"
-        fill="#3fb950">Weather</text>
+        fill="#3fb950">Temperature</text>
 
-  <rect x="284" y="150" width="68" height="18" rx="4" fill="#1a3a20"/>
+  <rect x="284" y="150" width="70" height="18" rx="4" fill="#1a3a20"/>
   <text x="318" y="163" text-anchor="middle" font-family="monospace" font-size="10"
-        fill="#3fb950">ESP-NOW</text>
+        fill="#3fb950">Pressure</text>
+
+  <rect x="358" y="150" width="70" height="18" rx="4" fill="#1a3a20"/>
+  <text x="392" y="163" text-anchor="middle" font-family="monospace" font-size="10"
+        fill="#3fb950">Humidity</text>
 
 </svg>
