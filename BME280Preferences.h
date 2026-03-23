@@ -15,7 +15,7 @@ public:
     explicit BME280Preferences(BME280Processor &processorRef);
 
     void load();
-    void saveTempOffset(float value);
+    void save(float value);
 
 private:
     

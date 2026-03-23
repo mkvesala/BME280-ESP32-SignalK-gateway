@@ -13,6 +13,6 @@ void BME280Preferences::load() {
 }
 
 // Save something to NVS
-void BME280Preferences::saveTempOffset(float value) {
+void BME280Preferences::save(float value) {
     (void)value;
 }

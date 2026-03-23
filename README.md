@@ -43,7 +43,7 @@ This is one of my individual digital boat projects. Use at your own risk. Not fo
 
 ### Classes
 
-<!-- Class diagram here -->
+<img src="docs/uml_class_diagram.png" width="480">
 
 Each class with their full public API. Private attributes only to demonstrate class relationships.
 
@@ -264,6 +264,10 @@ Developed by Matti Vesala in collaboration with Claude (Anthropic).
 Check [CONTRIBUTING.md](CONTRIBUTING.md) for further information on AI-assisted development in the project.
 
 I would highly appreciate improvement suggestions as well as any Arduino-style ESP32/C++ coding advice.
+
+This is a companion project to my [CMPS14-ESP32-SignalK-gateway](https://github.com/mkvesala/CMPS14-ESP32-SignalK-gateway) and [ESP32-Crowpanel-compass](https://github.com/mkvesala/ESP32-Crowpanel-compass). Check the UML diagram below to see how these projects relate:
+
+<img src="docs/full_uml_diagram.png" width="480">
 
 ## Gallery
 
