@@ -16,7 +16,7 @@ Optionally shows live readings on a 16x2 LCD display. If no WiFi is available th
 OTA firmware updates are enabled. Persistent configuration storage (NVS) and web UI are skeleton-implemented and reserved for future use.
 
 Developed and tested on:
-- [NodeMCU ESP32 development board (ESP-WROOM-32)](https://joy-it.net/en/products/SBC-NodeMCU-ESP32)
+- [NodeMCU ESP32 development board](https://joy-it.net/en/products/SBC-NodeMCU-ESP32)
 - [ESP32 board package](https://github.com/espressif/arduino-esp32) (3.3.7)
 - [Arduino IDE](https://www.arduino.cc/en/software/) (2.3.8)
 - SignalK Server (2.23.0)
@@ -175,7 +175,7 @@ Using a different display can be done within the `DisplayManager` class while en
 
 ### Bill of materials
 
-1. ESP32 module (any standard ESP-WROOM-32 development board)
+1. ESP32 development module
 2. BME280 sensor (I2C mode, address 0x77)
 3. LCD 16x2 module with I2C backpack (optional, address 0x27)
 4. Wiring — I2C bus (SDA GPIO21, SCL GPIO22) shared by BME280 and LCD
