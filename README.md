@@ -171,7 +171,7 @@ Using a different display can be done within the `DisplayManager` class while en
 
 ### Schematic
 
-<!-- Schematic here -->
+<img src="docs/schematic_bme280.png" width="480">
 
 ### Bill of materials
 
@@ -267,7 +267,7 @@ I would highly appreciate improvement suggestions as well as any Arduino-style E
 
 This is a companion project to my [CMPS14-ESP32-SignalK-gateway](https://github.com/mkvesala/CMPS14-ESP32-SignalK-gateway) and [ESP32-Crowpanel-compass](https://github.com/mkvesala/ESP32-Crowpanel-compass). Check the UML diagram below to see how these projects relate:
 
-<img src="docs/full_uml_diagram.png" width="480">
+<img src="docs/full_uml_diagram.jpeg" width="480">
 
 ## Gallery
 
