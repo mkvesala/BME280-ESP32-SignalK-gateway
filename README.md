@@ -16,11 +16,11 @@ Optionally shows live readings on a 16x2 LCD display. If no WiFi is available th
 OTA firmware updates are enabled. Persistent configuration storage (NVS) and web UI are skeleton-implemented and reserved for future use.
 
 Developed and tested on:
-- [NodeMCU ESP32 development board](https://joy-it.net/en/products/SBC-NodeMCU-ESP32)
+- [Wemos D1 R32 ESP32 development board](https://partco.fi/tuote/arduino-esp32-kehityskortti-esp-wroom-32-2526)
 - [ESP32 board package](https://github.com/espressif/arduino-esp32) (3.3.7)
 - [Arduino IDE](https://www.arduino.cc/en/software/) (2.3.8)
 - SignalK Server (2.23.0)
-- [Crowtail BME280 atmospheric sensor](https://www.elecrow.com/crowtail-bme280-atmospheric-sensor.html?srsltid=AfmBOoqz8N42UlkOzulReRqNCtjRw_tAOI5-S-jgCNO6rQSgmIyVBUtu) (2.0)
+- [Elecrow Crowtail BME280 atmospheric sensor](https://www.elecrow.com/crowtail-bme280-atmospheric-sensor.html?srsltid=AfmBOoqz8N42UlkOzulReRqNCtjRw_tAOI5-S-jgCNO6rQSgmIyVBUtu) (2.0)
 
 Integrated via ESP-NOW to:
 - [ESP32-Crowpanel-compass](https://github.com/mkvesala/ESP32-Crowpanel-compass) (v2.0.0)
@@ -211,6 +211,7 @@ Using a different display can be done within the `DisplayManager` class while en
    inline constexpr uint16_t    SK_PORT   = 3000; // replace with your SignalK server port
    inline constexpr const char* SK_TOKEN  = "your_signalk_auth_token_here";
    inline constexpr const char* OTA_PASS  = "your_OTA_password_here";
+   inline constexpr const char* DEFAULT_WEB_PASSWORD = "your_default_web_password_here";
    ```
 4. **Make sure that `secrets.h` is listed in your `.gitignore` file**
 5. Connect BME280 to the I2C pins (SDA GPIO21, SCL GPIO22) and optionally connect LCD to the same I2C bus
@@ -255,7 +256,7 @@ Using a different display can be done within the `DisplayManager` class while en
 
 Developed and tested using:
 
-- NodeMCU ESP32 development board (ESP-WROOM-32)
+- Wemos D1 R32 ESP32 development board
 - Espressif Systems esp32 3.3.7 package on Arduino IDE 2.3.8
 - SignalK Server version 2.23.0
 
