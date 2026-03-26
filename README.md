@@ -29,9 +29,8 @@ Integrated via ESP-NOW to:
 
 This is one of my individual digital boat projects. Use at your own risk. Not for safety-critical operations.
 
-1. I needed reliable outside weather data (temperature, humidity, pressure) available in SignalK and on the vessel's ESP-NOW peer-to-peer network
+1. I needed outside weather data (temperature, humidity, pressure) available in SignalK and on the vessel's ESP-NOW peer-to-peer network
 2. I wanted to continue building on the ESP32 gateway design pattern established in previous projects
-3. The BME280 makes for a simple first implementation of the shared `espnow_protocol.h` `WeatherDelta` message type
 
 ## Release history
 
@@ -40,8 +39,6 @@ This is one of my individual digital boat projects. Use at your own risk. Not fo
 | v1.0.0 | main | Initial release. BME280 reading, SignalK WebSocket, ESP-NOW broadcast, optional LCD. |
 
 ## Classes
-
-### Classes
 
 <img src="docs/uml_class_diagram.png" width="480">
 
@@ -109,7 +106,7 @@ ws://<server>:<port>/signalk/v1/stream?token=<optional>
 | SignalK path | Unit | Source value |
 |---|---|---|
 | `environment.outside.temperature` | Kelvin | °C + 273.15 |
-| `environment.outside.relativeHumidity` | ratio 0–1 | % / 100 |
+| `environment.outside.relativeHumidity` | ratio 0-1 | % / 100 |
 | `environment.outside.pressure` | Pascal | hPa x 100 |
 
 Source name is auto-derived from the device MAC address: `esp32.bme280-XXYYZZ`.
@@ -178,7 +175,8 @@ Using a different display can be done within the `DisplayManager` class while en
 1. ESP32 development module
 2. BME280 sensor (I2C mode, address 0x77)
 3. LCD 16x2 module with I2C backpack (optional, address 0x27)
-4. Wiring — I2C bus (SDA GPIO21, SCL GPIO22) shared by BME280 and LCD
+4. Wiring, crowtail to headers
+5. Enclosure, DC power jack
 5. WiFi router providing wireless LAN AP
 6. SignalK server running in LAN
 
@@ -272,4 +270,4 @@ This is a companion project to my [CMPS14-ESP32-SignalK-gateway](https://github.
 
 ## Gallery
 
-<!-- Photos here -->
+<img src="docs/bme1.jpeg" width="240"> <img src="docs/bme2.jpeg" width="240"> <img src="docs/full_uml_diagram.jpeg" width="240"> <img src="docs/uml_class_diagram.png" width="240">
