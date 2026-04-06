@@ -36,13 +36,14 @@ This is one of my individual digital boat projects. Use at your own risk. Not fo
 
 | Release | Branch | Comment |
 |---------|--------|---------|
+| v1.0.1 | main | Latest release. Patching documentation only. |
 | v1.0.0 | main | Initial release. BME280 reading, SignalK WebSocket, ESP-NOW broadcast, optional LCD. |
 
 ## Classes
 
-<img src="docs/uml_class_diagram.png" width="480">
+Class diagram including the companion projects:
 
-Each class with their full public API. Private attributes only to demonstrate class relationships.
+<img src="https://raw.githubusercontent.com/mkvesala/ESP32-Crowpanel-compass/main/docs/full_uml_diagram.jpeg" width="480">
 
 **`BME280Processor`:**
 - Owns: `ESPNow::WeatherDelta` (data struct)
@@ -266,8 +267,8 @@ I would highly appreciate improvement suggestions as well as any Arduino-style E
 
 This is a companion project to my [CMPS14-ESP32-SignalK-gateway](https://github.com/mkvesala/CMPS14-ESP32-SignalK-gateway) and [ESP32-Crowpanel-compass](https://github.com/mkvesala/ESP32-Crowpanel-compass). Check the UML diagram below to see how these projects relate:
 
-<img src="docs/full_uml_diagram.jpeg" width="480">
+<img src="https://raw.githubusercontent.com/mkvesala/ESP32-Crowpanel-compass/main/docs/full_uml_diagram.jpeg" width="480">
 
 ## Gallery
 
-<img src="docs/bme1.jpeg" width="240"> <img src="docs/bme2.jpeg" width="240"> <img src="docs/full_uml_diagram.jpeg" width="240"> <img src="docs/uml_class_diagram.png" width="240">
+<img src="docs/bme1.jpeg" width="240"> <img src="docs/bme2.jpeg" width="240"> <img src="docs/full_uml_diagram.jpeg" width="240"> <img src="https://raw.githubusercontent.com/mkvesala/ESP32-Crowpanel-compass/main/docs/full_uml_diagram.jpeg" width="240">
