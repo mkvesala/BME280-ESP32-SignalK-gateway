@@ -271,4 +271,4 @@ This is a companion project to my [CMPS14-ESP32-SignalK-gateway](https://github.
 
 ## Gallery
 
-<img src="docs/bme1.jpeg" width="240"> <img src="docs/bme2.jpeg" width="240"> <img src="docs/full_uml_diagram.jpeg" width="240"> <img src="https://raw.githubusercontent.com/mkvesala/ESP32-Crowpanel-compass/main/docs/full_uml_diagram.jpeg" width="240">
+<img src="docs/bme1.jpeg" width="240"> <img src="docs/bme2.jpeg" width="240"> <img src="https://raw.githubusercontent.com/mkvesala/ESP32-Crowpanel-compass/main/docs/full_uml_diagram.jpeg" width="240">
