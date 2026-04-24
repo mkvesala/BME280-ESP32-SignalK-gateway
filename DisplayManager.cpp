@@ -26,6 +26,16 @@ void DisplayManager::begin() {
     _lcd.print("Connecting...");
 }
 
+// Show a two-line info message on the LCD (e.g. security alerts)
+void DisplayManager::showInfoMessage(const char* line1, const char* line2) {
+    if (!_lcd_found) return;
+    _lcd.clear();
+    _lcd.setCursor(0, 0);
+    _lcd.print(line1);
+    _lcd.setCursor(0, 1);
+    _lcd.print(line2);
+}
+
 // Update display in app.loop()
 void DisplayManager::handle() {
     if (!_lcd_found) return;

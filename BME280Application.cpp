@@ -31,8 +31,22 @@ void BME280Application::begin() {
     // Stop bluetooth
     btStop();
 
-    // WiFi AP+STA mode (ESP-NOW co-existence requirement)
+    // WiFi AP+STA mode (ESP-NOW co-existence requirement).
+    // softAP() secures the AP interface immediately after mode() — before any
+    // client can connect. Hidden SSID, WPA2 password, max 1 connection.
     WiFi.mode(WIFI_AP_STA);
+    WiFi.softAP(AP_SSID, AP_PASS, 1 /*channel*/, 1 /*ssid_hidden*/, 1 /*max_connection*/);
+
+    // 3rd line of AP defence — register before WiFi.begin() so no event is missed.
+    // Callback runs in FreeRTOS "arduino_events" task: deauth immediately, flag loop().
+    // MAC is copied before setting the flag so loop() always reads a complete address.
+    WiFi.onEvent([this](arduino_event_id_t /*id*/, arduino_event_info_t info) {
+        uint8_t aid = info.wifi_ap_staconnected.aid;
+        memcpy(_ap_intruder_mac, info.wifi_ap_staconnected.mac, 6);
+        esp_wifi_deauth_sta(aid);
+        _ap_intruder = true;
+    }, ARDUINO_EVENT_WIFI_AP_STACONNECTED);
+
     WiFi.setSleep(false);
     WiFi.begin(WIFI_SSID, WIFI_PASS);
     _wifi_state = WifiState::CONNECTING;
@@ -46,6 +60,7 @@ void BME280Application::begin() {
 void BME280Application::loop() {
     const unsigned long now = millis();
     this->handleWifi(now);
+    this->handleAPIntruder();
     this->handleOTA();
     this->handleWebUI();
     this->handleWebsocket(now);
@@ -56,6 +71,18 @@ void BME280Application::loop() {
 }
 
 // === P R I V A T E ===
+
+// AP intruder alert — deauth done in event callback; log + display here
+void BME280Application::handleAPIntruder() {
+    if (!_ap_intruder) return;
+    _ap_intruder = false;  // clear before Serial/display so a rapid second event isn't lost
+    char mac[18];
+    snprintf(mac, sizeof(mac), "%02X:%02X:%02X:%02X:%02X:%02X",
+             _ap_intruder_mac[0], _ap_intruder_mac[1], _ap_intruder_mac[2],
+             _ap_intruder_mac[3], _ap_intruder_mac[4], _ap_intruder_mac[5]);
+    Serial.printf("[AP] INTRUDER deauthed — MAC %s\n", mac);
+    _display.showInfoMessage("AP: INTRUDER!", mac);
+}
 
 // WiFi handler for the loop()
 void BME280Application::handleWifi(unsigned long now) {

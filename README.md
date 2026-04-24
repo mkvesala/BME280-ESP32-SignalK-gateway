@@ -36,7 +36,8 @@ This is one of my individual digital boat projects. Use at your own risk. Not fo
 
 | Release | Branch | Comment |
 |---------|--------|---------|
-| v1.0.1 | main | Latest release. Patching documentation only. |
+| v1.1.0 | main | Latest release. WiFi AP security hardening and intrusion detection. |
+| v1.0.1 | main | Patching documentation only. |
 | v1.0.0 | main | Initial release. BME280 reading, SignalK WebSocket, ESP-NOW broadcast, optional LCD. |
 
 ## Classes
@@ -72,7 +73,7 @@ Class diagram including the companion projects:
 - Owns: `LiquidCrystal_I2C`
 - Uses: `BME280Processor`, `SignalKBroker`
 - Owned by: `BME280Application`
-- Responsible for: optional LCD 16x2 display
+- Responsible for: optional LCD 16x2 display; `showInfoMessage()` displays two-line alert messages (e.g. AP intrusion alerts)
 
 **`WebUIManager`:**
 - Owns: `WebServer`
@@ -143,9 +144,17 @@ Using a different display can be done within the `DisplayManager` class while en
 
 ### WiFi and OTA
 
-- WiFi state machine: `INIT → CONNECTING → CONNECTED`, with a 90-second connection timeout and automatic fallback to `OFF` on failure or missing SSID
+- WiFi state machine: `INIT → CONNECTING → CONNECTED`, with a ~3-minute connection timeout and automatic fallback to `OFF` on failure or missing SSID
 - Auto-reconnect on dropped connection
 - ArduinoOTA enabled immediately after WiFi connects; hostname is set to the SignalK source name
+
+### WiFi AP security
+
+ESP-NOW requires `WIFI_AP_STA` mode, which opens an AP interface on the ESP32. The AP is not intended for external clients and is hardened with three lines of defence:
+
+1. **Hidden SSID** — the AP is not advertised (`ssid_hidden=1`); it cannot be discovered by passive scanning
+2. **WPA2 password** — the AP requires a passphrase (`AP_PASS` in `secrets.h`, minimum 8 characters); the network is inaccessible without it
+3. **Intrusion detection** — if a client connects despite the above, it is deauthenticated immediately via `esp_wifi_deauth_sta()`; the intruder's MAC address is logged to Serial and shown on the LCD
 
 ## Project structure
 
@@ -204,13 +213,15 @@ Using a different display can be done within the `DisplayManager` class while en
 2. Alternatively, download the code as zip
 3. Set up your credentials in `secrets.h` (first by renaming `secrets.example.h` to `secrets.h`)
    ```cpp
-   inline constexpr const char* WIFI_SSID = "your_wifi_ssid_here";
-   inline constexpr const char* WIFI_PASS = "your_wifi_password_here";
-   inline constexpr const char* SK_HOST   = "your_signalk_address_here";
-   inline constexpr uint16_t    SK_PORT   = 3000; // replace with your SignalK server port
-   inline constexpr const char* SK_TOKEN  = "your_signalk_auth_token_here";
-   inline constexpr const char* OTA_PASS  = "your_OTA_password_here";
+   inline constexpr const char* WIFI_SSID            = "your_wifi_ssid_here";
+   inline constexpr const char* WIFI_PASS            = "your_wifi_password_here";
+   inline constexpr const char* SK_HOST              = "your_signalk_address_here";
+   inline constexpr uint16_t    SK_PORT              = 3000; // replace with your SignalK server port
+   inline constexpr const char* SK_TOKEN             = "your_signalk_auth_token_here";
+   inline constexpr const char* OTA_PASS             = "your_OTA_password_here";
    inline constexpr const char* DEFAULT_WEB_PASSWORD = "your_default_web_password_here";
+   inline constexpr const char* AP_SSID              = "your_ap_ssid_here";   // hidden, name not critical
+   inline constexpr const char* AP_PASS              = "your_ap_password_here"; // min 8 chars (WPA2)
    ```
 4. **Make sure that `secrets.h` is listed in your `.gitignore` file**
 5. Connect BME280 to the I2C pins (SDA GPIO21, SCL GPIO22) and optionally connect LCD to the same I2C bus
@@ -239,6 +250,10 @@ Using a different display can be done within the `DisplayManager` class while en
 
 4. **`secrets.h`**
    - Make sure that `secrets.h` is listed in your `.gitignore` file
+
+5. **WiFi AP interface**
+   - The AP interface is required for ESP-NOW and is hardened automatically (hidden SSID, WPA2, immediate deauth on intrusion — see [WiFi AP security](#wifi-ap-security))
+   - Set a strong `AP_PASS` (minimum 8 characters) in `secrets.h`
 
 ### Deployment
 

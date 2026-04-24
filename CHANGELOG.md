@@ -4,6 +4,21 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2026-04-24
+
+### Added
+
+- **WiFi AP security — hidden SSID** - `WiFi.softAP()` called immediately after `WiFi.mode(WIFI_AP_STA)` with `ssid_hidden=1` so the AP interface is never advertised; the AP is required for ESP-NOW / WiFi co-existence but is not intended for external clients
+- **WiFi AP security — WPA2 password** - AP protected with a WPA2 passphrase (`AP_PASS`, minimum 8 characters) configured in `secrets.h`; `secrets.example.h` updated with the new `AP_SSID` and `AP_PASS` constants
+- **WiFi AP intrusion detection** - `WiFi.onEvent(ARDUINO_EVENT_WIFI_AP_STACONNECTED)` registered in `begin()` before `WiFi.begin()` so no connection event is missed; the FreeRTOS callback copies the intruder MAC atomically and calls `esp_wifi_deauth_sta()` to kick the client immediately, then sets a `volatile bool` flag for `loop()`
+- **`handleAPIntruder()`** - lightweight `loop()`-context handler that clears the intrusion flag, formats the MAC address and writes a `[AP] INTRUDER deauthed` log line to Serial and a two-line alert to the LCD via `DisplayManager::showInfoMessage()`
+- **`DisplayManager::showInfoMessage()`** - new public method that clears the LCD and displays an arbitrary two-line message; used by the intrusion-detection path and available for other alert use cases
+- **`#include <esp_wifi.h>`** added to `BME280Application.h` to expose `esp_wifi_deauth_sta()`
+
+### Changed
+
+- **`WIFI_TIMEOUT_MS`** increased from 90 001 ms (~90 s) to 179 999 ms (~3 min) to allow more time for WiFi association in congested or distant network environments
+
 ## [1.0.1] - 2026-04-06
 
 ### Changed
@@ -32,5 +47,6 @@ Patching documentation only. Updated README with references to the updated UML c
 - **`secrets.example.h`** - template for WiFi credentials, SignalK host/port/token and OTA password
 - **`WifiState.h`** - scoped enum for WiFi state machine states
 
+[1.1.0]: https://github.com/mkvesala/BME280-ESP32-SignalK-gateway/compare/v1.0.1...v1.1.0
 [1.0.1]: https://github.com/mkvesala/BME280-ESP32-SignalK-gateway/releases/tag/v1.0.1
 [1.0.0]: https://github.com/mkvesala/BME280-ESP32-SignalK-gateway/releases/tag/v1.0.0

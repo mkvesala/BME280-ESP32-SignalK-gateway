@@ -4,6 +4,7 @@
 #include <Wire.h>
 #include <WiFi.h>
 #include <ArduinoOTA.h>
+#include <esp_wifi.h>
 #include <Adafruit_BME280.h>
 #include "WifiState.h"
 #include "BME280Processor.h"
@@ -43,7 +44,7 @@ private:
     static constexpr unsigned long SIGNALK_TX_MS        = 1999;
     static constexpr unsigned long ESPNOW_TX_MS         = 2003;
     static constexpr unsigned long WIFI_STATUS_CHECK_MS = 503;
-    static constexpr unsigned long WIFI_TIMEOUT_MS      = 90001;
+    static constexpr unsigned long WIFI_TIMEOUT_MS      = 179999;
     static constexpr unsigned long WS_RETRY_MS          = 1999;
     static constexpr unsigned long WS_RETRY_MAX_MS      = 119993;
 
@@ -59,6 +60,10 @@ private:
     bool _sensor_ok = false;
     WifiState _wifi_state = WifiState::INIT;
 
+    // AP intruder detection — written in WiFi event callback, read in loop()
+    volatile bool _ap_intruder      = false;
+    uint8_t       _ap_intruder_mac[6] = {};
+
     // Stack allocated instances owned by the app
     Adafruit_BME280   _bme;
     BME280Processor   _processor;
@@ -70,6 +75,7 @@ private:
 
     // Handlers for app.loop()
     void handleWifi(unsigned long now);
+    void handleAPIntruder();
     void handleOTA();
     void handleWebUI();
     void handleWebsocket(unsigned long now);
