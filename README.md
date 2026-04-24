@@ -268,11 +268,7 @@ ESP-NOW requires `WIFI_AP_STA` mode, which opens an AP interface on the ESP32. T
 
 ## Credits
 
-Developed and tested using:
-
-- Wemos D1 R32 ESP32 development board
-- Espressif Systems esp32 3.3.7 package on Arduino IDE 2.3.8
-- SignalK Server version 2.23.0
+Developed and tested using HW and SW described in this README file.
 
 Developed by Matti Vesala in collaboration with Claude (Anthropic).
 
@@ -280,7 +276,7 @@ Check [CONTRIBUTING.md](CONTRIBUTING.md) for further information on AI-assisted 
 
 I would highly appreciate improvement suggestions as well as any Arduino-style ESP32/C++ coding advice.
 
-This is a companion project to my [CMPS14-ESP32-SignalK-gateway](https://github.com/mkvesala/CMPS14-ESP32-SignalK-gateway) and [ESP32-Crowpanel-compass](https://github.com/mkvesala/ESP32-Crowpanel-compass). Check the UML diagram below to see how these projects relate:
+This is a companion project to my [CMPS14-ESP32-SignalK-gateway](https://github.com/mkvesala/CMPS14-ESP32-SignalK-gateway), [VEDirect-ESP32-SignalK-gateway](https://github.com/mkvesala/VEDirect-ESP32-SignalK-gateway), [UBLOX-ESP32-SignalK-gateway](https://github.com/mkvesala/UBLOX-ESP32-SignalK-gateway) and [ESP32-Crowpanel-compass](https://github.com/mkvesala/ESP32-Crowpanel-compass). Check the UML diagram below to see how these projects relate:
 
 <img src="https://raw.githubusercontent.com/mkvesala/ESP32-Crowpanel-compass/main/docs/full_uml_diagram.jpeg" width="480">
 
