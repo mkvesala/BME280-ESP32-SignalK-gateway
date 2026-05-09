@@ -127,8 +127,11 @@ void BME280Application::handleWifi(unsigned long now) {
     }
 }
 
-// Init WiFi-dependent stuff
+// Init WiFi-dependent stuff — guarded so OTA and WebServer routes are registered only once
 void BME280Application::initWifiServices() {
+    if (_wifi_services_initialized) return;
+    _wifi_services_initialized = true;
+
     // SignalK websocket
     _signalk.begin();
 

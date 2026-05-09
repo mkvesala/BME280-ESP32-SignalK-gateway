@@ -58,6 +58,7 @@ private:
     unsigned long _wifi_last_check_ms = 0;
 
     bool _sensor_ok = false;
+    bool _wifi_services_initialized = false;
     WifiState _wifi_state = WifiState::INIT;
 
     // AP intruder detection — written in WiFi event callback, read in loop()

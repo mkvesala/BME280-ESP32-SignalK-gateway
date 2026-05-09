@@ -15,6 +15,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - **`DisplayManager::showInfoMessage()`** - new public method that clears the LCD and displays an arbitrary two-line message; used by the intrusion-detection path and available for other alert use cases
 - **`#include <esp_wifi.h>`** added to `BME280Application.h` to expose `esp_wifi_deauth_sta()`
 
+### Fixed
+
+- **WiFi reconnect resource leak** - `initWifiServices()` now guards itself with a `_wifi_services_initialized` flag so `ArduinoOTA.begin()` (UDP socket + mDNS) and `WebUIManager::begin()` (HTTP route registration) are called only once per boot; previously each WiFi reconnection re-invoked both, silently leaking a UDP socket and WebServer handler entries until the heap was exhausted
+
 ### Changed
 
 - **`WIFI_TIMEOUT_MS`** increased from 90 001 ms (~90 s) to 179 999 ms (~3 min) to allow more time for WiFi association in congested or distant network environments

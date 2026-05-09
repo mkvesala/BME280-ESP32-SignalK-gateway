@@ -17,13 +17,13 @@ OTA firmware updates are enabled. Persistent configuration storage (NVS) and web
 
 Developed and tested on:
 - [Wemos D1 R32 ESP32 development board](https://partco.fi/tuote/arduino-esp32-kehityskortti-esp-wroom-32-2526)
-- [ESP32 board package](https://github.com/espressif/arduino-esp32) (3.3.7)
+- [ESP32 board package](https://github.com/espressif/arduino-esp32) (3.3.8)
 - [Arduino IDE](https://www.arduino.cc/en/software/) (2.3.8)
-- SignalK Server (2.23.0)
+- SignalK Server (2.26.0)
 - [Elecrow Crowtail BME280 atmospheric sensor](https://www.elecrow.com/crowtail-bme280-atmospheric-sensor.html?srsltid=AfmBOoqz8N42UlkOzulReRqNCtjRw_tAOI5-S-jgCNO6rQSgmIyVBUtu) (2.0)
 
 Integrated via ESP-NOW to:
-- [ESP32-Crowpanel-compass](https://github.com/mkvesala/ESP32-Crowpanel-compass) (v2.0.0)
+- [ESP32-Crowpanel-compass](https://github.com/mkvesala/ESP32-Crowpanel-compass) (v4.0.0)
 
 ## Purpose of the project
 
@@ -195,7 +195,7 @@ ESP-NOW requires `WIFI_AP_STA` mode, which opens an AP interface on the ESP32. T
 ## Software used
 
 1. Arduino IDE 2.3.8
-2. Espressif Systems esp32 board package 3.3.7
+2. Espressif Systems esp32 board package 3.3.8
 3. Additional libraries installed:
    - Adafruit BME280 Library (by Adafruit, version 2.3.0)
    - Adafruit Unified Sensor (by Adafruit, version 1.1.15)
