@@ -48,6 +48,7 @@ void BME280Application::begin() {
     }, ARDUINO_EVENT_WIFI_AP_STACONNECTED);
 
     WiFi.setSleep(false);
+    this->applyStaticIP();
     WiFi.begin(WIFI_SSID, WIFI_PASS);
     _wifi_state = WifiState::CONNECTING;
     _wifi_conn_start_ms = millis();
@@ -98,7 +99,8 @@ void BME280Application::handleWifi(unsigned long now) {
             if (status == WL_CONNECTED) {
                 _wifi_state = WifiState::CONNECTED;
                 this->initWifiServices();
-                _expn_retry_ms = WS_RETRY_MS;
+                _expn_retry_ms  = WS_RETRY_MS;
+                _next_ws_try_ms = now;
             } else if ((long)(now - _wifi_conn_start_ms) >= (long)WIFI_TIMEOUT_MS) {
                 _wifi_state = WifiState::OFF;
                 WiFi.disconnect(true);
@@ -113,8 +115,12 @@ void BME280Application::handleWifi(unsigned long now) {
 
         case WifiState::CONNECTED:
             if (!WiFi.isConnected()) {
+                _signalk.closeWebsocket();
                 _wifi_state = WifiState::CONNECTING;
-                WiFi.disconnect();
+                WiFi.disconnect(true);
+                delay(200);
+                WiFi.setSleep(false);
+                this->applyStaticIP();
                 WiFi.begin(WIFI_SSID, WIFI_PASS);
                 _wifi_conn_start_ms = now;
             }
@@ -202,4 +208,13 @@ void BME280Application::handleESPNow(unsigned long now) {
 // LCD handler for the loop()
 void BME280Application::handleDisplay() {
     _display.handle();
+}
+
+// Apply static IP from secrets.h — gateway used as DNS
+void BME280Application::applyStaticIP() {
+    IPAddress ip, gateway, subnet;
+    ip.fromString(WIFI_STATIC_IP);
+    gateway.fromString(WIFI_GATEWAY);
+    subnet.fromString(WIFI_SUBNET);
+    WiFi.config(ip, gateway, subnet, gateway);
 }

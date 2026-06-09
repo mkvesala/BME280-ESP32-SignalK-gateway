@@ -86,5 +86,6 @@ private:
     void handleDisplay();
 
     void initWifiServices();
-    
+    void applyStaticIP();
+
 };
