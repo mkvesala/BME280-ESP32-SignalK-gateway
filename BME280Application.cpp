@@ -36,6 +36,7 @@ void BME280Application::begin() {
     // client can connect. Hidden SSID, WPA2 password, max 1 connection.
     WiFi.mode(WIFI_AP_STA);
     WiFi.softAP(AP_SSID, AP_PASS, 1 /*channel*/, 1 /*ssid_hidden*/, 1 /*max_connection*/);
+    this->applyStaticIP();
 
     // 3rd line of AP defence — register before WiFi.begin() so no event is missed.
     // Callback runs in FreeRTOS "arduino_events" task: deauth immediately, flag loop().
@@ -48,7 +49,6 @@ void BME280Application::begin() {
     }, ARDUINO_EVENT_WIFI_AP_STACONNECTED);
 
     WiFi.setSleep(false);
-    this->applyStaticIP();
     WiFi.begin(WIFI_SSID, WIFI_PASS);
     _wifi_state = WifiState::CONNECTING;
     _wifi_conn_start_ms = millis();
