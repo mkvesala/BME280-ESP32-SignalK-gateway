@@ -47,8 +47,6 @@ private:
     static constexpr unsigned long WIFI_TIMEOUT_MS      = 179999;
     static constexpr unsigned long WS_RETRY_MS          = 1999;
     static constexpr unsigned long WS_RETRY_MAX_MS      = 119993;
-    static constexpr unsigned long WS_WATCHDOG_MS       = 599983UL;  // ~10 min WiFi up but WS silent → restart
-    static constexpr unsigned long LOOP_WATCHDOG_US     = 99991UL;   // ~100 ms EMA threshold → restart
 
     // Timers
     unsigned long _expn_retry_ms      = WS_RETRY_MS;
@@ -56,11 +54,8 @@ private:
     unsigned long _last_read_ms       = 0;
     unsigned long _last_signalk_tx_ms = 0;
     unsigned long _last_espnow_tx_ms  = 0;
-    unsigned long _wifi_conn_start_ms   = 0;
-    unsigned long _wifi_last_check_ms   = 0;
-    unsigned long _last_ws_activity_ms  = 0;  // Watchdog: last successful WebSocket open; 0 = never
-    float         _loop_avg_us          = 0.0f;
-    bool          _monitoring           = false;
+    unsigned long _wifi_conn_start_ms = 0;
+    unsigned long _wifi_last_check_ms = 0;
 
     bool _sensor_ok = false;
     bool _wifi_services_initialized = false;
@@ -91,7 +86,5 @@ private:
     void handleDisplay();
 
     void initWifiServices();
-    void handleWatchdog(unsigned long now);
-    void monitorLoopRuntime(unsigned long us);
-
+    
 };

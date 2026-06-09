@@ -14,8 +14,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - **`handleAPIntruder()`** - lightweight `loop()`-context handler that clears the intrusion flag, formats the MAC address and writes a `[AP] INTRUDER deauthed` log line to Serial and a two-line alert to the LCD via `DisplayManager::showInfoMessage()`
 - **`DisplayManager::showInfoMessage()`** - new public method that clears the LCD and displays an arbitrary two-line message; used by the intrusion-detection path and available for other alert use cases
 - **`#include <esp_wifi.h>`** added to `BME280Application.h` to expose `esp_wifi_deauth_sta()`
-- **Watchdog — loop runtime monitor** - `monitorLoopRuntime()` calculates an EMA (α=0.01) of each `loop()` iteration duration in microseconds; `handleWatchdog()` triggers `ESP.restart()` if the EMA exceeds 99 991 µs (~100 ms), catching blocking calls such as a hung `ws.connect()`
-- **Watchdog — network deadlock detection** - `handleWatchdog()` restarts the device if WiFi layer-2 reports connected but no WebSocket session has been opened for 599 983 ms (~10 min), covering the case where the TCP/IP stack is silently dead while `WiFi.isConnected()` returns `true`; the check is skipped if a WebSocket session has never been established (e.g. wrong SignalK host) to avoid boot-looping on a misconfigured device
 
 ### Fixed
 

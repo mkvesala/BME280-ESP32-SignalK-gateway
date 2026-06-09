@@ -58,19 +58,16 @@ void BME280Application::begin() {
 
 // Loop - called in main loop()
 void BME280Application::loop() {
-    const unsigned long loop_start = micros();
     const unsigned long now = millis();
     this->handleWifi(now);
     this->handleAPIntruder();
     this->handleOTA();
     this->handleWebUI();
     this->handleWebsocket(now);
-    this->handleWatchdog(now);
     this->handleSensorRead(now);
     this->handleSignalK(now);
     this->handleESPNow(now);
     this->handleDisplay();
-    this->monitorLoopRuntime(micros() - loop_start);
 }
 
 // === P R I V A T E ===
@@ -171,16 +168,12 @@ void BME280Application::handleWebsocket(unsigned long now) {
     if (_wifi_state != WifiState::CONNECTED) return;
     _signalk.handleStatus();
 
-    if (_signalk.isOpen()) {
-        _last_ws_activity_ms = now;
-        _expn_retry_ms = WS_RETRY_MS;
-    } else {
-        if ((long)(now - _next_ws_try_ms) >= 0) {
-            _signalk.connectWebsocket();
-            _next_ws_try_ms = now + _expn_retry_ms;
-            _expn_retry_ms = min(_expn_retry_ms * 2, WS_RETRY_MAX_MS);
-        }
+    if (!_signalk.isOpen() && (long)(now - _next_ws_try_ms) >= 0) {
+        _signalk.connectWebsocket();
+        _next_ws_try_ms = now + _expn_retry_ms;
+        _expn_retry_ms = min(_expn_retry_ms * 2, WS_RETRY_MAX_MS);
     }
+    if (_signalk.isOpen()) _expn_retry_ms = WS_RETRY_MS;
 }
 
 // Sensor reader for the loop()
@@ -209,30 +202,4 @@ void BME280Application::handleESPNow(unsigned long now) {
 // LCD handler for the loop()
 void BME280Application::handleDisplay() {
     _display.handle();
-}
-
-// Watchdog — restart on bloated loop runtime, or WiFi up but TCP/IP stack silently dead
-void BME280Application::handleWatchdog(unsigned long now) {
-    if (_monitoring && _loop_avg_us > LOOP_WATCHDOG_US) {
-        _display.showInfoMessage("LOOP WATCHDOG", "RESTARTING...");
-        delay(1999);
-        ESP.restart();
-    }
-    if (_wifi_state != WifiState::CONNECTED) return;
-    if (_signalk.isOpen()) return;
-    if (_last_ws_activity_ms == 0) return;
-    if ((long)(now - _last_ws_activity_ms) < (long)WS_WATCHDOG_MS) return;
-    _display.showInfoMessage("WATCHDOG", "RESTARTING...");
-    delay(1999);
-    ESP.restart();
-}
-
-// EMA loop runtime monitor — called at END of loop() so watchdog sees previous iteration
-void BME280Application::monitorLoopRuntime(unsigned long us) {
-    if (!_monitoring) {
-        _loop_avg_us = (float)us;
-        _monitoring  = true;
-    } else {
-        _loop_avg_us = 0.01f * (float)us + 0.99f * _loop_avg_us;
-    }
 }
