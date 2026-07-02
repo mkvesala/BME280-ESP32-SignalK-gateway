@@ -4,17 +4,6 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
-
-### Added
-
-- **WebSocket liveness — active ping/pong** - `SignalKBroker::ping()` sends a client-initiated WebSocket ping frame and the `GotPong` event refreshes `_last_pong_ms`; `BME280Application::handleWebsocket()` pings every `WS_PING_MS` (~10 s) while the socket is open
-- **Half-open TCP detection** - `SignalKBroker::isStale()` reports a connection where `isOpen()` still returns `true` but no pong has arrived within `PONG_TIMEOUT_MS` (~30 s); `handleWebsocket()` then calls `closeWebsocket()` and lets the existing exponential backoff reconnect, recovering from a silently-dead SignalK server (e.g. macOS host power-saving) without dropping WiFi
-
-### Changed
-
-- **Liveness recovery is transport-only** - the silently-dead connection is now healed by a graceful WebSocket reconnect instead of an `ESP.restart()`; this supersedes the reboot watchdog added in the earlier (reverted) change, which keyed off `isOpen()` and could not detect a half-open TCP while wrongly rebooting a healthy device during transient server outages
-
 ## [1.1.0] - 2026-04-24
 
 ### Added
@@ -25,6 +14,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - **`handleAPIntruder()`** - lightweight `loop()`-context handler that clears the intrusion flag, formats the MAC address and writes a `[AP] INTRUDER deauthed` log line to Serial and a two-line alert to the LCD via `DisplayManager::showInfoMessage()`
 - **`DisplayManager::showInfoMessage()`** - new public method that clears the LCD and displays an arbitrary two-line message; used by the intrusion-detection path and available for other alert use cases
 - **`#include <esp_wifi.h>`** added to `BME280Application.h` to expose `esp_wifi_deauth_sta()`
+- **WebSocket liveness — active ping/pong** - `SignalKBroker::ping()` sends a client-initiated WebSocket ping frame and the `GotPong` event refreshes `_last_pong_ms`; `BME280Application::handleWebsocket()` pings every `WS_PING_MS` (~10 s) while the socket is open
+- **Half-open TCP detection** - `SignalKBroker::isStale()` reports a connection where `isOpen()` still returns `true` but no pong has arrived within `PONG_TIMEOUT_MS` (~30 s); `handleWebsocket()` then calls `closeWebsocket()` and lets the existing exponential backoff reconnect, recovering from a silently-dead SignalK server (e.g. macOS host power-saving) without dropping WiFi
 
 ### Fixed
 
@@ -33,6 +24,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Changed
 
 - **`WIFI_TIMEOUT_MS`** increased from 90 001 ms (~90 s) to 179 999 ms (~3 min) to allow more time for WiFi association in congested or distant network environments
+- **Liveness recovery is transport-only** - the silently-dead connection is now healed by a graceful WebSocket reconnect instead of an `ESP.restart()`; this supersedes the reboot watchdog added in the earlier (reverted) change, which keyed off `isOpen()` and could not detect a half-open TCP while wrongly rebooting a healthy device during transient server outages
 
 ## [1.0.1] - 2026-04-06
 
