@@ -32,6 +32,9 @@ public:
     bool isOpen() const { return _ws_open; }
     const char* getSignalKSource() const { return SK_SOURCE; }
 
+    void ping();
+    bool isStale(unsigned long now) const;
+
     void sendDelta();
 
 private:
@@ -50,6 +53,10 @@ private:
     bool _ws_open = false;
     char SK_URL[512];
     char SK_SOURCE[32];
+
+    // Liveness — half-open TCP detection via client ping / server pong
+    static constexpr unsigned long PONG_TIMEOUT_MS = 29989UL;  // ~30 s w/o pong → stale
+    unsigned long _last_pong_ms = 0;   // millis() of last GotPong / open; 0 = not connected
 
     // Deadband (optional)
     static constexpr float DB_TEMP_C   = 0.0f;   // °C

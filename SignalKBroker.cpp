@@ -27,6 +27,7 @@ void SignalKBroker::handleStatus() {
 bool SignalKBroker::connectWebsocket() {
     _ws_open = _ws.connect(SK_URL);
     if (_ws_open) {
+        _last_pong_ms = millis();   // seed liveness so a fresh socket is not flagged stale
         _ws.onMessage([this](WebsocketsMessage msg) {
             this->onMessageCallback(msg);
         });
@@ -42,6 +43,18 @@ bool SignalKBroker::connectWebsocket() {
 void SignalKBroker::closeWebsocket() {
     _ws.close();
     _ws_open = false;
+    _last_pong_ms = 0;
+}
+
+// Send a client-initiated ping frame to probe liveness
+void SignalKBroker::ping() {
+    if (_ws_open) _ws.ping();
+}
+
+// Half-open detection: open, has been connected, but no pong within timeout
+bool SignalKBroker::isStale(unsigned long now) const {
+    return _ws_open && _last_pong_ms != 0 &&
+           (long)(now - _last_pong_ms) >= (long)PONG_TIMEOUT_MS;
 }
 
 // Send BME280 data to SignalK paths
@@ -118,12 +131,16 @@ void SignalKBroker::onEventCallback(WebsocketsEvent event) {
     switch (event) {
         case WebsocketsEvent::ConnectionOpened:
             _ws_open = true;
+            _last_pong_ms = millis();
             break;
         case WebsocketsEvent::ConnectionClosed:
             _ws_open = false;
             break;
         case WebsocketsEvent::GotPing:
             _ws.pong();
+            break;
+        case WebsocketsEvent::GotPong:
+            _last_pong_ms = millis();
             break;
         default:
             break;

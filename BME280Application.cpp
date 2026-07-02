@@ -176,6 +176,14 @@ void BME280Application::handleWebsocket(unsigned long now) {
 
     if (_signalk.isOpen()) {
         _expn_retry_ms = WS_RETRY_MS;
+        if ((long)(now - _last_ping_ms) >= (long)WS_PING_MS) {
+            _signalk.ping();
+            _last_ping_ms = now;
+        }
+        if (_signalk.isStale(now)) {
+            Serial.println("[SK] WS stale, reconnecting");
+            _signalk.closeWebsocket();   // next iterations reconnect via existing backoff
+        }
     } else if ((long)(now - _next_ws_try_ms) >= 0) {
         _signalk.connectWebsocket();
         _next_ws_try_ms = now + _expn_retry_ms;
