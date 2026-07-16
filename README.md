@@ -36,7 +36,8 @@ This is one of my individual digital boat projects. Use at your own risk. Not fo
 
 | Release | Branch | Comment |
 |---------|--------|---------|
-| v1.1.0 | main | Latest release. WiFi AP security hardening and intrusion detection; WebSocket ping/pong liveness detection. |
+| v1.2.0 | main | Latest release. WebSocket client recreated per reconnect to fix permanent reconnect failure after prolonged uptime. |
+| v1.1.0 | main | WiFi AP security hardening and intrusion detection; WebSocket ping/pong liveness detection. |
 | v1.0.1 | main | Patching documentation only. |
 | v1.0.0 | main | Initial release. BME280 reading, SignalK WebSocket, ESP-NOW broadcast, optional LCD. |
 
@@ -59,7 +60,7 @@ Class diagram including the companion projects:
 - Responsible for: loading and saving data to ESP32 NVS — *skeleton, not implemented in this version*
 
 **`SignalKBroker`:**
-- Owns: `WebsocketsClient`
+- Owns: `WebsocketsClient` (via `std::unique_ptr`, recreated fresh on every reconnect)
 - Uses: `BME280Processor`
 - Owned by: `BME280Application`
 - Responsible for: WebSocket connection and delta transmission to SignalK server
@@ -113,7 +114,7 @@ ws://<server>:<port>/signalk/v1/stream?token=<optional>
 
 Source name is auto-derived from the device MAC address: `esp32.bme280-XXYYZZ`.
 
-WebSocket reconnects automatically with exponential back-off starting at ~2 s, doubling on each failed attempt up to a ceiling of ~120 s, and resetting to the initial interval when the connection is restored.
+WebSocket reconnects automatically with exponential back-off starting at ~2 s, doubling on each failed attempt up to a ceiling of ~120 s, and resetting to the initial interval when the connection is restored. Each reconnect builds a brand-new `WebsocketsClient` (held via `std::unique_ptr`) and destroys the previous one, so every attempt starts from a clean TCP / lwIP socket state; this prevents a stuck underlying socket from making all future reconnects fail permanently until a reboot.
 
 **Connection liveness (active ping/pong):** while the socket is open the device sends a WebSocket ping every ~10 s and tracks the server's pong. If no pong arrives within ~30 s the connection is considered dead — even when `isOpen()` still reports `true`, as happens with a half-open TCP connection (e.g. the SignalK host freezing the link under power-saving) — and the socket is closed so the exponential back-off reconnects it. Recovery is transport-only: the device does **not** reboot, so ESP-NOW, the LCD and uptime are unaffected.
 

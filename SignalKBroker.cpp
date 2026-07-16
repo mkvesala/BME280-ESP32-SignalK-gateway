@@ -20,35 +20,42 @@ bool SignalKBroker::begin() {
 
 // Maintain websocket connection
 void SignalKBroker::handleStatus() {
-    if (_ws_open) _ws.poll();
+    if (_ws_open && _ws) _ws->poll();
 }
 
-// Connect websocket
+// Connect websocket — build a brand-new client so every attempt starts from a clean
+// TCP / lwIP socket state; a reused client can retain a stuck socket that never recovers
 bool SignalKBroker::connectWebsocket() {
-    _ws_open = _ws.connect(SK_URL);
+    _ws = std::make_unique<WebsocketsClient>();
+    _ws->onMessage([this](WebsocketsMessage msg) {
+        this->onMessageCallback(msg);
+    });
+    _ws->onEvent([this](WebsocketsEvent event, const String &data) {
+        (void)data;
+        this->onEventCallback(event);
+    });
+    _ws_open = _ws->connect(SK_URL);
     if (_ws_open) {
         _last_pong_ms = millis();   // seed liveness so a fresh socket is not flagged stale
-        _ws.onMessage([this](WebsocketsMessage msg) {
-            this->onMessageCallback(msg);
-        });
-        _ws.onEvent([this](WebsocketsEvent event, const String &data) {
-            (void)data;
-            this->onEventCallback(event);
-        });
+    } else {
+        _ws.reset();                // failed connect → destroy immediately, free the socket
     }
     return _ws_open;
 }
 
-// Close websocket
+// Close websocket — destroy the client so no stale transport state survives
 void SignalKBroker::closeWebsocket() {
-    _ws.close();
+    if (_ws) {
+        _ws->close();
+        _ws.reset();
+    }
     _ws_open = false;
     _last_pong_ms = 0;
 }
 
 // Send a client-initiated ping frame to probe liveness
 void SignalKBroker::ping() {
-    if (_ws_open) _ws.ping();
+    if (_ws_open && _ws) _ws->ping();
 }
 
 // Half-open detection: open, has been connected, but no pong within timeout
@@ -59,7 +66,7 @@ bool SignalKBroker::isStale(unsigned long now) const {
 
 // Send BME280 data to SignalK paths
 void SignalKBroker::sendDelta() {
-    if (!_ws_open) return;
+    if (!_ws_open || !_ws) return;
 
     auto d = _processor.getDelta();
     if (!validf(d.temperature_c) || !validf(d.humidity_p) || !validf(d.pressure_hpa)) return;
@@ -100,10 +107,10 @@ void SignalKBroker::sendDelta() {
 
     char buf[640];
     size_t n = serializeJson(_delta_doc, buf, sizeof(buf));
-    bool ok = _ws.send(buf, n);
+    bool ok = _ws->send(buf, n);
     if (!ok) {
-        _ws.close();
-        _ws_open = false;
+        this->closeWebsocket();   // destroy the client; backoff loop reconnects fresh
+        return;
     }
 }
 
@@ -137,7 +144,7 @@ void SignalKBroker::onEventCallback(WebsocketsEvent event) {
             _ws_open = false;
             break;
         case WebsocketsEvent::GotPing:
-            _ws.pong();
+            if (_ws) _ws->pong();
             break;
         case WebsocketsEvent::GotPong:
             _last_pong_ms = millis();

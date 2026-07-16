@@ -3,6 +3,7 @@
 #include <ArduinoWebsockets.h>
 #include <ArduinoJson.h>
 #include <esp_mac.h>
+#include <memory>
 #include "BME280Processor.h"
 
 // === C L A S S  S I G N A L K B R O K E R ===
@@ -15,7 +16,7 @@
 //  - Get connection status and source name
 //  - Send BME280 data to SignalK paths
 // - Uses: BME280Processor
-// - Owns: WebsocketsClient
+// - Owns: WebsocketsClient (recreated per reconnect — see connectWebsocket)
 // - Owned by: BME280Application
 
 class SignalKBroker {
@@ -45,7 +46,7 @@ private:
     void onEventCallback(websockets::WebsocketsEvent event);
 
     BME280Processor &_processor;
-    websockets::WebsocketsClient _ws;
+    std::unique_ptr<websockets::WebsocketsClient> _ws;  // fresh instance every connect
 
     StaticJsonDocument<512> _delta_doc;
     StaticJsonDocument<1024> _incoming_doc;
