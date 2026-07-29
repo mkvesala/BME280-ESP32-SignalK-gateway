@@ -36,7 +36,8 @@ This is one of my individual digital boat projects. Use at your own risk. Not fo
 
 | Release | Branch | Comment |
 |---------|--------|---------|
-| v1.2.0 | main | Latest release. WebSocket client recreated per reconnect to fix permanent reconnect failure after prolonged uptime. |
+| v1.2.1 | main | Latest release. Updated the superset version of shared espnow_protocol.h header to this project. |
+| v1.2.0 | main | WebSocket client recreated per reconnect to fix permanent reconnect failure after prolonged uptime. |
 | v1.1.0 | main | WiFi AP security hardening and intrusion detection; WebSocket ping/pong liveness detection. |
 | v1.0.1 | main | Patching documentation only. |
 | v1.0.0 | main | Initial release. BME280 reading, SignalK WebSocket, ESP-NOW broadcast, optional LCD. |
@@ -130,6 +131,8 @@ Broadcasts weather data via ESP-NOW for other ESP32 devices, such as external di
 
 **Broadcast mode:** Uses broadcast address (FF:FF:FF:FF:FF:FF) — any ESP-NOW receiver on the same WiFi channel can listen.
 
+**Shared wire protocol:** `espnow_protocol.h` is hand-copied identically into every ESP32 project on the boat and defines a single fleet-wide `ESPNowMsgType` number space; this gateway sends `WEATHER_DELTA` (3). A change to the header is not complete until every project holds the same copy.
+
 **WiFi coexistence:** ESP-NOW operates alongside WiFi (AP_STA mode). Both SignalK WebSocket and ESP-NOW broadcast function simultaneously.
 
 **Receives:** incoming command processing stub is present; no commands are handled in this version.
@@ -167,7 +170,7 @@ ESP-NOW requires `WIFI_AP_STA` mode, which opens an AP interface on the ESP32. T
 | `secrets.example.h` | Example credentials. Rename to `secrets.h` and populate with your credentials. |
 | `version.h` | Software version |
 | `WifiState.h` | Enum class for WiFi states |
-| `espnow_protocol.h` | Shared ESP-NOW wire protocol — header, packet template, all payload structs |
+| `espnow_protocol.h` | Shared ESP-NOW wire protocol — header, packet template, all payload structs. Identical copy in every gateway project |
 | `helpers.h` | `validf()` float validator, test data helpers |
 | `BME280Processor.h / .cpp` | Class `BME280Processor`, the "processor" |
 | `BME280Preferences.h / .cpp` | Class `BME280Preferences`, the "prefs" — skeleton |

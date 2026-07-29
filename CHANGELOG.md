@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.1] - 2026-07-29
+
+### Changed
+
+- **Shared `espnow_protocol.h` updated to the fleet-wide superset** - the hand-copied protocol header had drifted into four diverging versions across the boat's ESP32 projects; they were merged into a single superset and every project now holds an identical copy. Adds the `HALMET_WATER_DELTA` (7) and `DEPTH_DELTA` (8) message types with their payload structs (`HALMETWaterDelta`, `DepthDelta`), and reserves `GENERIC_SK_DELTA` (20) for a possible future runtime-configurable path relay (documented only, not implemented). The header now also documents the ownership rules — copy the whole file to every project, never reconcile two versions field by field — and the fleet-wide `msg_type` allocation table listing every sender and receiver. No existing enum value or payload struct was modified, so the wire format is unchanged and every existing receiver stays compatible; this gateway's own firmware logic and the `WeatherDelta` it transmits are untouched
+
+### Fixed
+
+- **Position and SOG hidden at anchor on ESP-NOW receivers** - the receiver-side helper `convertGnssDeltaToData()` in the shared header folded a NaN COG into `fix_ok`, so a stationary boat — which has a valid position fix but an undefined course — appeared to have no fix at all and the display suppressed position and SOG as well. `GnssData` now tracks position validity (`fix_ok`) and course validity (`cog_valid`) separately, exposed as `hasFix()` / `hasCog()`, and carries `lat_deg` / `lon_deg` for the receiver's position display. Receiver-side conversion only — this gateway compiles the struct but never uses it, and the data it transmits is unaffected
+
 ## [1.2.0] - 2026-07-16
 
 ### Fixed
@@ -64,6 +74,8 @@ Patching documentation only. Updated README with references to the updated UML c
 - **`secrets.example.h`** - template for WiFi credentials, SignalK host/port/token and OTA password
 - **`WifiState.h`** - scoped enum for WiFi state machine states
 
+[1.2.1]: https://github.com/mkvesala/BME280-ESP32-SignalK-gateway/compare/v1.2.0...v1.2.1
+[1.2.0]: https://github.com/mkvesala/BME280-ESP32-SignalK-gateway/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/mkvesala/BME280-ESP32-SignalK-gateway/compare/v1.0.1...v1.1.0
 [1.0.1]: https://github.com/mkvesala/BME280-ESP32-SignalK-gateway/releases/tag/v1.0.1
 [1.0.0]: https://github.com/mkvesala/BME280-ESP32-SignalK-gateway/releases/tag/v1.0.0
