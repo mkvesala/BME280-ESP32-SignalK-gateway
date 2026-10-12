@@ -9,6 +9,16 @@
 [![Protocol: ESP-NOW](https://img.shields.io/badge/Protocol-ESP--NOW-red)](https://www.espressif.com/en/solutions/low-power-solutions/esp-now)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
+## Disclaimer
+
+This is a personal hobby project. It is provided "as is", without warranty of any kind. See LICENSE.
+
+This firmware is NOT intended for navigation or for any safety-critical use at sea. Do not rely on the data it produces (such as heading, depth or position) to navigate a vessel. Always use certified navigation equipment and proper seamanship.
+
+You use this code entirely at your own risk. The author accepts no liability for any damage, injury or loss arising from its use.
+
+## Introduction
+
 ESP32-based reader for [BME280](https://www.bosch-sensortec.com/products/environmental-sensors/humidity-sensors-bme280/) environmental sensor. Sends temperature, relative humidity and barometric pressure to [SignalK](https://signalk.org) server via WebSocket/JSON and to other ESP32 devices via ESP-NOW broadcast.
 
 Optionally shows live readings on a 16x2 LCD display. If no WiFi is available the sensor still broadcasts via ESP-NOW.
@@ -36,7 +46,8 @@ This is one of my individual digital boat projects. Use at your own risk. Not fo
 
 | Release | Branch | Comment |
 |---------|--------|---------|
-| v1.2.1 | main | Latest release. Updated the superset version of shared espnow_protocol.h header to this project. |
+| v1.2.2 | main | Latest release. Added disclaimer and HALMET gateway as a companion project to README. |
+| v1.2.1 | main | Updated the superset version of shared espnow_protocol.h header to this project. |
 | v1.2.0 | main | WebSocket client recreated per reconnect to fix permanent reconnect failure after prolonged uptime. |
 | v1.1.0 | main | WiFi AP security hardening and intrusion detection; WebSocket ping/pong liveness detection. |
 | v1.0.1 | main | Patching documentation only. |
@@ -282,7 +293,7 @@ Check [CONTRIBUTING.md](CONTRIBUTING.md) for further information on development 
 
 I would highly appreciate improvement suggestions as well as any Arduino-style ESP32/C++ coding advice.
 
-This is a companion project to my [CMPS14-ESP32-SignalK-gateway](https://github.com/mkvesala/CMPS14-ESP32-SignalK-gateway), [VEDirect-ESP32-SignalK-gateway](https://github.com/mkvesala/VEDirect-ESP32-SignalK-gateway), [UBLOX-ESP32-SignalK-gateway](https://github.com/mkvesala/UBLOX-ESP32-SignalK-gateway) and [ESP32-Crowpanel-compass](https://github.com/mkvesala/ESP32-Crowpanel-compass). Check the UML diagram below to see how these projects relate:
+This is a companion project to my [CMPS14-ESP32-SignalK-gateway](https://github.com/mkvesala/CMPS14-ESP32-SignalK-gateway), [VEDirect-ESP32-SignalK-gateway](https://github.com/mkvesala/VEDirect-ESP32-SignalK-gateway), [UBLOX-ESP32-SignalK-gateway](https://github.com/mkvesala/UBLOX-ESP32-SignalK-gateway), [HALMET-ESP32-SignalK-gateway](https://github.com/mkvesala/HALMET-ESP32-SignalK-gateway) and [ESP32-Crowpanel-compass](https://github.com/mkvesala/ESP32-Crowpanel-compass). Check the UML diagram below to see how these projects relate:
 
 <img src="https://raw.githubusercontent.com/mkvesala/ESP32-Crowpanel-compass/main/docs/full_uml_diagram.jpeg" width="480">
 

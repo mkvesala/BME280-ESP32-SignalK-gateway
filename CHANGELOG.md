@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.2] - 2026-10-12
+
+### Changed
+
+- **README: disclaimer added** - a Disclaimer section at the top of the README (same wording as in the companion CMPS14 gateway) states that this is a personal hobby project provided "as is", not intended for navigation or safety-critical use, and used entirely at one's own risk. The existing introduction now sits under its own Introduction heading
+- **README: HALMET gateway listed as a companion project** - added a link to [HALMET-ESP32-SignalK-gateway](https://github.com/mkvesala/HALMET-ESP32-SignalK-gateway) in the companion projects list. Documentation only — no firmware changes
+
 ## [1.2.1] - 2026-07-29
 
 ### Changed
@@ -74,6 +81,7 @@ Patching documentation only. Updated README with references to the updated UML c
 - **`secrets.example.h`** - template for WiFi credentials, SignalK host/port/token and OTA password
 - **`WifiState.h`** - scoped enum for WiFi state machine states
 
+[1.2.2]: https://github.com/mkvesala/BME280-ESP32-SignalK-gateway/compare/v1.2.1...v1.2.2
 [1.2.1]: https://github.com/mkvesala/BME280-ESP32-SignalK-gateway/compare/v1.2.0...v1.2.1
 [1.2.0]: https://github.com/mkvesala/BME280-ESP32-SignalK-gateway/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/mkvesala/BME280-ESP32-SignalK-gateway/compare/v1.0.1...v1.1.0
