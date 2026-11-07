@@ -46,7 +46,8 @@ This is one of my individual digital boat projects. Use at your own risk. Not fo
 
 | Release | Branch | Comment |
 |---------|--------|---------|
-| v1.2.2 | main | Latest release. Added disclaimer and HALMET gateway as a companion project to README. |
+| v1.2.3 | main | Latest release. Shared espnow_protocol.h synced with the fleet-wide copy (adds `HALMET_OIL_DELTA` (10)). No firmware logic changes. |
+| v1.2.2 | main | Added disclaimer and HALMET gateway as a companion project to README. |
 | v1.2.1 | main | Updated the superset version of shared espnow_protocol.h header to this project. |
 | v1.2.0 | main | WebSocket client recreated per reconnect to fix permanent reconnect failure after prolonged uptime. |
 | v1.1.0 | main | WiFi AP security hardening and intrusion detection; WebSocket ping/pong liveness detection. |

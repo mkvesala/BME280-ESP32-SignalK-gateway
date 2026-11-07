@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.3] - 2026-11-07
+
+### Changed
+
+- **Shared `espnow_protocol.h` synced with the fleet-wide copy** - adds the `HALMET_OIL_DELTA` (10) message type and its `HALMETOilDelta` payload struct (engine oil pressure, `propulsion.0.oilPressure` [Pa], sent by HALMET-ESP32-SignalK-gateway). Additive only: no existing enum value or payload struct changed, so the wire format is unchanged and every existing receiver stays compatible. This gateway neither sends nor reads the new type; its own firmware logic and the `WeatherDelta` it transmits are untouched
+
 ## [1.2.2] - 2026-10-12
 
 ### Changed
@@ -81,6 +87,7 @@ Patching documentation only. Updated README with references to the updated UML c
 - **`secrets.example.h`** - template for WiFi credentials, SignalK host/port/token and OTA password
 - **`WifiState.h`** - scoped enum for WiFi state machine states
 
+[1.2.3]: https://github.com/mkvesala/BME280-ESP32-SignalK-gateway/compare/v1.2.2...v1.2.3
 [1.2.2]: https://github.com/mkvesala/BME280-ESP32-SignalK-gateway/compare/v1.2.1...v1.2.2
 [1.2.1]: https://github.com/mkvesala/BME280-ESP32-SignalK-gateway/compare/v1.2.0...v1.2.1
 [1.2.0]: https://github.com/mkvesala/BME280-ESP32-SignalK-gateway/compare/v1.1.0...v1.2.0
