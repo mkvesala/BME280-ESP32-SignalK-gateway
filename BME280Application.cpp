@@ -35,7 +35,7 @@ void BME280Application::begin() {
     // softAP() secures the AP interface immediately after mode() — before any
     // client can connect. Hidden SSID, WPA2 password, max 1 connection.
     WiFi.mode(WIFI_AP_STA);
-    WiFi.softAP(AP_SSID, AP_PASS, 1 /*channel*/, 1 /*ssid_hidden*/, 1 /*max_connection*/);
+    WiFi.softAP(AP_SSID, AP_PASS, ESPNOW_CHANNEL, 1 /*ssid_hidden*/, 1 /*max_connection*/);
     this->applyStaticIP();
 
     // 3rd line of AP defence — register before WiFi.begin() so no event is missed.
@@ -49,6 +49,7 @@ void BME280Application::begin() {
     }, ARDUINO_EVENT_WIFI_AP_STACONNECTED);
 
     WiFi.setSleep(false);
+    WiFi.setAutoReconnect(false);   // handleWifi() is the only reconnect logic — no background scans
     WiFi.begin(WIFI_SSID, WIFI_PASS);
     _wifi_state = WifiState::CONNECTING;
     _wifi_conn_start_ms = millis();
@@ -98,17 +99,13 @@ void BME280Application::handleWifi(unsigned long now) {
             wl_status_t status = WiFi.status();
             if (status == WL_CONNECTED) {
                 _wifi_state = WifiState::CONNECTED;
+                _wifi_retry_ms = WIFI_RETRY_MS;
                 this->initWifiServices();
                 _expn_retry_ms  = WS_RETRY_MS;
                 _next_ws_try_ms = now;
             } else if ((long)(now - _wifi_conn_start_ms) >= (long)WIFI_TIMEOUT_MS) {
-                _wifi_state = WifiState::OFF;
-                WiFi.disconnect(true);
-                WiFi.mode(WIFI_OFF);
-            } else if (status == WL_CONNECT_FAILED || status == WL_NO_SSID_AVAIL) {
-                _wifi_state = WifiState::OFF;
-                WiFi.disconnect(true);
-                WiFi.mode(WIFI_OFF);
+                // Timeout only — WL_NO_SSID_AVAIL / WL_CONNECT_FAILED may be stale right after begin()
+                this->enterWifiWait(now);
             }
             break;
         }
@@ -126,11 +123,35 @@ void BME280Application::handleWifi(unsigned long now) {
             }
             break;
 
+        case WifiState::DISCONNECTED: {
+            // STA idle, radio on — hold the ESP-NOW channel until the next retry
+            uint8_t primary = 0;
+            wifi_second_chan_t second = WIFI_SECOND_CHAN_NONE;
+            if (esp_wifi_get_channel(&primary, &second) == ESP_OK && primary != ESPNOW_CHANNEL) {
+                esp_wifi_set_channel(ESPNOW_CHANNEL, WIFI_SECOND_CHAN_NONE);
+            }
+            if ((long)(now - _wifi_next_retry_ms) >= 0) {
+                _wifi_state = WifiState::CONNECTING;
+                WiFi.setSleep(false);        // reapply before every WiFi.begin()
+                this->applyStaticIP();       // reapply before every WiFi.begin()
+                WiFi.begin(WIFI_SSID, WIFI_PASS);
+                _wifi_conn_start_ms = now;
+            }
+            break;
+        }
+
         case WifiState::FAILED:
-        case WifiState::DISCONNECTED:
         case WifiState::OFF:
             break;
     }
+}
+
+// Stop the connect attempt, keep the radio on for ESP-NOW and schedule the next retry
+void BME280Application::enterWifiWait(unsigned long now) {
+    WiFi.disconnect();   // STA idle only — never disconnect(true) or WiFi.mode(WIFI_OFF) here
+    _wifi_state = WifiState::DISCONNECTED;
+    _wifi_next_retry_ms = now + _wifi_retry_ms;
+    _wifi_retry_ms = min(_wifi_retry_ms * 2, WIFI_RETRY_MAX_MS);
 }
 
 // Init WiFi-dependent stuff — guarded so OTA and WebServer routes are registered only once

@@ -44,7 +44,11 @@ private:
     static constexpr unsigned long SIGNALK_TX_MS        = 1999;
     static constexpr unsigned long ESPNOW_TX_MS         = 2003;
     static constexpr unsigned long WIFI_STATUS_CHECK_MS = 503;
-    static constexpr unsigned long WIFI_TIMEOUT_MS      = 179999;
+    static constexpr unsigned long WIFI_TIMEOUT_MS      = 14983;   // One STA connect attempt (was 179999)
+    static constexpr unsigned long WIFI_RETRY_MS        = 29989;   // First wait before a WiFi retry
+    static constexpr unsigned long WIFI_RETRY_MAX_MS    = 119993;  // WiFi retry backoff ceiling
+    // ESP-NOW channel — must equal the router's fixed WiFi channel and the receivers' channel
+    static constexpr uint8_t ESPNOW_CHANNEL = 6;
     static constexpr unsigned long WS_RETRY_MS          = 1999;
     static constexpr unsigned long WS_RETRY_MAX_MS      = 119993;
     static constexpr unsigned long WS_PING_MS           = 9973;    // ~10 s client ping cadence
@@ -58,6 +62,8 @@ private:
     unsigned long _last_espnow_tx_ms  = 0;
     unsigned long _wifi_conn_start_ms = 0;
     unsigned long _wifi_last_check_ms = 0;
+    unsigned long _wifi_retry_ms      = WIFI_RETRY_MS;
+    unsigned long _wifi_next_retry_ms = 0;
 
     bool _sensor_ok = false;
     bool _wifi_services_initialized = false;
@@ -78,6 +84,7 @@ private:
 
     // Handlers for app.loop()
     void handleWifi(unsigned long now);
+    void enterWifiWait(unsigned long now);
     void handleAPIntruder();
     void handleOTA();
     void handleWebUI();
