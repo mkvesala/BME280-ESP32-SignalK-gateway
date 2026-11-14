@@ -90,13 +90,13 @@ void SignalKBroker::sendDelta() {
     // Build SignalK delta
     _delta_doc.clear();
     _delta_doc["context"] = "vessels.self";
-    auto updates = _delta_doc.createNestedArray("updates");
-    auto up = updates.createNestedObject();
+    auto updates = _delta_doc["updates"].to<JsonArray>();
+    auto up = updates.add<JsonObject>();
     up["$source"] = SK_SOURCE;
-    auto values = up.createNestedArray("values");
+    auto values = up["values"].to<JsonArray>();
 
     auto add = [&](const char* path, float v) {
-        auto o = values.createNestedObject();
+        auto o = values.add<JsonObject>();
         o["path"]  = path;
         o["value"] = v;
     };
@@ -105,6 +105,10 @@ void SignalKBroker::sendDelta() {
     add("environment.outside.relativeHumidity", humidity_r);
     add("environment.outside.pressure", pressure_pa);
 
+    if (_delta_doc.overflowed()) {   // heap ran out while building — never send a partial delta
+        _last_temp_c = NAN;           // reopen the deadband so the next cycle sends
+        return;
+    }
     char buf[640];
     size_t n = serializeJson(_delta_doc, buf, sizeof(buf));
     bool ok = _ws->send(buf, n);
@@ -158,5 +162,7 @@ void SignalKBroker::onEventCallback(WebsocketsEvent event) {
 void SignalKBroker::onMessageCallback(WebsocketsMessage msg) {
     if (!msg.isText()) return;
     _incoming_doc.clear();
-    deserializeJson(_incoming_doc, msg.data());
+    // The result is not used. An empty filter makes the parser skip every value, so the
+    // unsubscribed vessels.self stream is not copied onto the heap message by message.
+    deserializeJson(_incoming_doc, msg.data(), DeserializationOption::Filter(JsonDocument()));
 }

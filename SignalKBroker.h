@@ -48,8 +48,8 @@ private:
     BME280Processor &_processor;
     std::unique_ptr<websockets::WebsocketsClient> _ws;  // fresh instance every connect
 
-    StaticJsonDocument<512> _delta_doc;
-    StaticJsonDocument<1024> _incoming_doc;
+    JsonDocument _delta_doc;
+    JsonDocument _incoming_doc;
 
     bool _ws_open = false;
     char SK_URL[512];

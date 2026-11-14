@@ -4,6 +4,34 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.5] - 2026-11-14
+
+Patch release: ArduinoJson 7 API migration. The ArduinoJson 6-style calls that ArduinoJson 7
+deprecates are replaced with their ArduinoJson 7 equivalents. SignalK traffic is unchanged.
+
+### Changed
+- `StaticJsonDocument<N>` → `JsonDocument` (`_delta_doc`, `_incoming_doc`). In ArduinoJson 7 the
+  capacity `N` was already ignored and the documents already lived on the heap, so memory
+  behaviour is unchanged.
+- `createNestedArray(key)` / `createNestedObject()` → `doc[key].to<JsonArray>()` /
+  `array.add<JsonObject>()`. The old calls were inline wrappers for exactly these, so the JSON
+  sent to SignalK is byte-for-byte the same.
+- Incoming messages, whose content is not used, are parsed with an empty
+  `DeserializationOption::Filter`. The parser skips every value, so the unsubscribed vessels.self
+  stream is no longer copied onto the heap message by message.
+
+### Fixed
+- A delta is no longer sent if the heap ran out while it was being built
+  (`JsonDocument::overflowed()`). Previously a partial delta could reach SignalK. The next cycle
+  sends normally.
+
+### Notes
+- Requires ArduinoJson 7.x (built with 7.4.3); the build no longer shows ArduinoJson deprecation
+  warnings.
+- Verified on the host against a simulated SignalK server: outgoing frames are identical to
+  v1.2.4, no heap growth over 10 000 cycles. Not yet tested on the boat.
+- No change to SignalK paths, subscriptions, the ESP-NOW wire format, NVS settings or the web UI.
+
 ## [1.2.4] - 2026-11-09
 
 Patch release: WiFi outage recovery. ESP-NOW no longer stops when the boat's WiFi router goes
@@ -116,6 +144,7 @@ Patching documentation only. Updated README with references to the updated UML c
 - **`secrets.example.h`** - template for WiFi credentials, SignalK host/port/token and OTA password
 - **`WifiState.h`** - scoped enum for WiFi state machine states
 
+[1.2.5]: https://github.com/mkvesala/BME280-ESP32-SignalK-gateway/compare/v1.2.4...v1.2.5
 [1.2.4]: https://github.com/mkvesala/BME280-ESP32-SignalK-gateway/compare/v1.2.3...v1.2.4
 [1.2.3]: https://github.com/mkvesala/BME280-ESP32-SignalK-gateway/compare/v1.2.2...v1.2.3
 [1.2.2]: https://github.com/mkvesala/BME280-ESP32-SignalK-gateway/compare/v1.2.1...v1.2.2

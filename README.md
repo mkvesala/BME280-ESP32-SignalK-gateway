@@ -46,7 +46,8 @@ This is one of my individual digital boat projects. Use at your own risk. Not fo
 
 | Release | Branch | Comment |
 |---------|--------|---------|
-| v1.2.4 | main | Latest release. WiFi outage recovery: the radio stays on, so ESP-NOW keeps broadcasting while the router is down, and WiFi and SignalK reconnect by themselves. See CHANGELOG. |
+| v1.2.5 | main | Latest release. ArduinoJson 7 API migration: deprecated calls replaced, SignalK traffic unchanged. See CHANGELOG. |
+| v1.2.4 | main | WiFi outage recovery: the radio stays on, so ESP-NOW keeps broadcasting while the router is down, and WiFi and SignalK reconnect by themselves. See CHANGELOG. |
 | v1.2.3 | main | Shared espnow_protocol.h synced with the fleet-wide copy (adds `HALMET_OIL_DELTA` (10)). No firmware logic changes. |
 | v1.2.2 | main | Added disclaimer and HALMET gateway as a companion project to README. |
 | v1.2.1 | main | Updated the superset version of shared espnow_protocol.h header to this project. |
